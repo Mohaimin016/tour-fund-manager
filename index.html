@@ -291,23 +291,37 @@ function updateKeepScreenButton(){
 }
 async function requestScreenWakeLock(){
  if(!keepScreenAwakeEnabled||document.hidden||!('wakeLock' in navigator))return;
- try{screenWakeLock=await navigator.wakeLock.request('screen');screenWakeLock.addEventListener('release',()=>{screenWakeLock=null;});}
- catch(e){locationMessage('Keep screen awake is not available: '+(e.message||'browser restriction'));}
+ try{
+  if(screenWakeLock&&!screenWakeLock.released)return;
+  screenWakeLock=await navigator.wakeLock.request('screen');
+  screenWakeLock.addEventListener('release',()=>{
+   screenWakeLock=null;
+   // Some browsers release the lock temporarily; reacquire while the page remains visible.
+   if(keepScreenAwakeEnabled&&!document.hidden)setTimeout(()=>requestScreenWakeLock(),300);
+  },{once:true});
+  locationMessage('Keep screen awake is ON. Keep this page open and visible.');
+ }catch(e){
+  screenWakeLock=null;
+  locationMessage('Screen lock was blocked by this browser or phone settings. Keep the page open and check battery/browser settings.');
+ }
 }
 $('keepScreenAwakeBtn').addEventListener('click',async()=>{
  keepScreenAwakeEnabled=!keepScreenAwakeEnabled;
  localStorage.setItem('tourFundKeepScreenAwake_v1',keepScreenAwakeEnabled?'1':'0');
  updateKeepScreenButton();
  if(keepScreenAwakeEnabled){
-  if(!('wakeLock' in navigator)){locationMessage('This browser does not support Keep Screen Awake. Try updating Chrome.');return;}
+  if(!('wakeLock' in navigator)){locationMessage('This browser does not support screen lock. Try opening this link in updated Google Chrome.');return;}
   await requestScreenWakeLock();
-  if(screenWakeLock)locationMessage('Keep screen awake is ON while this page stays visible. Background location is not guaranteed when screen is off.');
  }else{
   if(screenWakeLock){try{await screenWakeLock.release()}catch(e){}screenWakeLock=null;}
   locationMessage('Keep screen awake is OFF.');
  }
 });
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(screenWakeLock){screenWakeLock.release().catch(()=>{});screenWakeLock=null;}}else if(keepScreenAwakeEnabled){requestScreenWakeLock();}});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){if(screenWakeLock){screenWakeLock.release().catch(()=>{});screenWakeLock=null;}}
+ else if(keepScreenAwakeEnabled)requestScreenWakeLock();
+});
+window.addEventListener('focus',()=>{if(keepScreenAwakeEnabled)requestScreenWakeLock()});
 updateKeepScreenButton();
 $('fullscreenMapBtn').addEventListener('click',()=>setMapFullscreen(!mapFullscreenActive));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mapFullscreenActive)setMapFullscreen(false)});
