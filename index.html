@@ -254,9 +254,18 @@ async function stopLocationSharing(clearConsent=true){
  if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
  if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
  const visitorId=localStorage.getItem(LOCATION_VISITOR_KEY);
- if(visitorId){const {error}=await supabaseClient.from('tour_fund_locations').delete().eq('user_id',visitorId);if(error)locationMessage('Sharing stopped on this device, but could not remove the last location: '+error.message);else locationMessage('Location sharing is OFF. Your last shared location was removed.')}
- else locationMessage('Location sharing is OFF.');
- refreshTeamLocations();
+ // Remove this device's marker immediately so it cannot look like the device is still live.
+ if(visitorId&&locationMarkers.has(visitorId)){
+  const marker=locationMarkers.get(visitorId);
+  if(locationMap)locationMap.removeLayer(marker);
+  locationMarkers.delete(visitorId);
+ }
+ if(visitorId){
+  const {error}=await supabaseClient.from('tour_fund_locations').delete().eq('user_id',visitorId);
+  if(error)locationMessage('Sharing stopped on this device, but the server could not remove the last location: '+error.message);
+  else locationMessage('Location sharing is OFF. This device location was removed.');
+ }else locationMessage('Location sharing is OFF.');
+ await refreshTeamLocations();
 }
 $('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||'';
 let mapFullscreenActive=false;
