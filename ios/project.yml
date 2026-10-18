@@ -1,0 +1,25 @@
+name: TourFundManager
+options:
+  bundleIdPrefix: com.mohaimin
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  TourFundManager:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mohaimin.tourfundmanager
+        PRODUCT_NAME: Tour Fund Manager
+        INFOPLIST_KEY_CFBundleDisplayName: Tour Fund
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Tour Fund Manager uses your location to share your position with your tour group."
+        INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: "Allow Always location access so Tour Fund Manager can share your location while the app is in the background."
+        INFOPLIST_KEY_UIBackgroundModes:
+          - location
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 5.0
+        TARGETED_DEVICE_FAMILY: "1"
+        IPHONEOS_DEPLOYMENT_TARGET: 16.0
+        CODE_SIGN_STYLE: Automatic
