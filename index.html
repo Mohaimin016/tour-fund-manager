@@ -236,8 +236,17 @@ async function sendMyLocation(position){
  const payload={user_id:visitorId,display_name:displayName,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,sharing_enabled:true,updated_at:new Date().toISOString()};
  const {error}=await supabaseClient.from('tour_fund_locations').upsert(payload,{onConflict:'user_id'});
  if(error){locationMessage('Location update failed: '+error.message);return}
+ // Keep one latest location ID per name: remove other IDs using the same name.
+ const {data:allRows,error:readError}=await supabaseClient.from('tour_fund_locations').select('user_id,display_name');
+ if(!readError&&Array.isArray(allRows)){
+  const duplicateIds=allRows.filter(p=>p.user_id!==visitorId&&String(p.display_name||'').trim().toLocaleLowerCase()===displayName.toLocaleLowerCase()).map(p=>p.user_id);
+  for(const duplicateId of duplicateIds){
+   const {error:deleteError}=await supabaseClient.from('tour_fund_locations').delete().eq('user_id',duplicateId);
+   if(deleteError){locationMessage('Location is live, but an older ID with this name could not be deleted. Check Supabase DELETE permissions.');break}
+  }
+ }
  localStorage.setItem('tourFundPublicLocationName_v1',displayName);
- locationMessage('Sharing is ON · last updated '+formatLocationTime(new Date()));
+ locationMessage('Sharing is ON · latest ID for this name is active · '+formatLocationTime(new Date()));
  refreshTeamLocations();
 }
 function startLocationSharing(){
