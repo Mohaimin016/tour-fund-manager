@@ -21,6 +21,9 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{width:100%;border:0;border-radius:9px;background:var(--green);color:white;font-size:14px;font-weight:800;padding:10px;margin-top:9px;min-height:42px}.btn.gold{background:#d9ae55;color:#18251f}.btn.secondary{background:#edf4f0;color:var(--green);border:1px solid var(--line)}.btn.danger{background:#fff0f0;color:var(--red);border:1px solid #f0d2d2}
 .member{border:1px solid var(--line);border-radius:13px;padding:13px;margin-top:9px}.membertop{display:flex;justify-content:space-between;gap:8px;align-items:center}.membername{font-weight:800;font-size:15px}.pill{font-size:11px;background:var(--mint);color:var(--green);border-radius:20px;padding:5px 8px;font-weight:800;white-space:nowrap}.membernums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.num{background:#f5f8f6;border-radius:9px;padding:8px}.num small{display:block;color:var(--muted);font-size:10px}.num strong{font-size:13px;overflow-wrap:anywhere}.memberactions{display:flex;gap:7px;margin-top:10px}.mini{flex:1;border:1px solid var(--line);background:white;color:var(--green);padding:9px 5px;border-radius:8px;font-size:12px;font-weight:750}
 .historyitem{padding:12px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.historyitem:last-child{border-bottom:0}.histtitle{font-size:11px;font-weight:750}.histtitle.credit{color:#19734d}.histtitle.debit{color:var(--red)}.histmeta{font-size:14px;color:var(--green);font-weight:800;margin-top:5px;white-space:pre-wrap;background:#e8f4ef;border-left:3px solid var(--gold);padding:5px 7px;border-radius:5px;line-height:1.35}.histmeta.debit{color:var(--red);background:#fff0f0;border-left-color:var(--red)}.amt{font-size:14px;font-weight:850;white-space:nowrap}.credit{color:#19734d}.debit{color:var(--red)}.empty{font-size:13px;color:var(--muted);padding:12px 0;text-align:center}.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tools .btn{font-size:13px;margin-top:0;padding:12px}.tools .excel-export{width:auto;min-height:32px;padding:6px 10px;font-size:11px;justify-self:start}.filter{margin-bottom:9px}.recent-panel{padding:8px}.recent-panel{align-self:start;min-height:150px;display:block!important;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:9px}.recent-panel h2{display:block;margin:0 0 5px;font-size:14px}.recent-row{display:flex;justify-content:space-between;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid var(--line)}.recent-row:last-child{border-bottom:0}.recent-comment{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}.recent-amount{font-size:11px;font-weight:850;color:var(--red);white-space:nowrap}.recent-empty{font-size:12px;color:var(--muted);padding:5px 0}
+.stat{cursor:pointer;transition:transform .12s,box-shadow .12s}.stat:hover,.stat:focus-visible{transform:translateY(-1px);box-shadow:0 5px 16px #123c3518;outline:2px solid #d9ae55;outline-offset:1px}
+#detailModal{position:fixed;inset:0;z-index:1000;background:#071b17a8;display:flex;align-items:center;justify-content:center;padding:14px}
+#detailModal[hidden]{display:none!important}.detail-dialog{width:min(680px,100%);max-height:85vh;overflow:auto;background:white;border-radius:15px;padding:16px;box-shadow:0 20px 60px #0004}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:8px}.detail-head h2{margin:0}.detail-close{border:1px solid var(--line);border-radius:8px;background:#f5f8f6;color:var(--green);font-size:20px;line-height:1;padding:7px 11px}.detail-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;background:#f4f7f5;border-radius:9px;margin-bottom:8px}.detail-summary strong{font-size:18px}.detail-row{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:flex-start}.detail-row:last-child{border-bottom:0}.detail-main{min-width:0}.detail-title{font-weight:750;font-size:13px;overflow-wrap:anywhere}.detail-meta{font-size:11px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.detail-amount{font-weight:850;white-space:nowrap;font-size:13px}.detail-empty{padding:22px 8px;text-align:center;color:var(--muted)}@media(max-width:420px){.detail-dialog{padding:12px}.detail-row{gap:7px}.detail-amount{font-size:12px}}
 footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 @media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}.layout>.panel,.layout>.recent-panel{margin-top:9px;min-width:0}.wide{grid-column:1/-1}}
 </style>
@@ -28,11 +31,11 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 <body>
 <header><h1>Tour Fund Manager</h1><p>Member credits · Expenses · Live balance</p><div id="syncStatus" role="status" hidden style="display:none!important">Connecting to shared fund…</div><div id="authBox" style="margin-top:8px"><form id="loginForm" style="display:flex;gap:6px;flex-wrap:wrap"><input id="adminEmail" type="email" placeholder="Admin email" autocomplete="username" style="flex:1;min-width:130px;font-size:13px;min-height:36px"><input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="flex:1;min-width:130px;font-size:13px;min-height:36px"><button type="submit" style="border:0;border-radius:8px;padding:7px 12px;font-weight:800;color:#123c35;background:#fff">Admin login</button></form><button id="logoutBtn" type="button" hidden style="margin-top:6px;border:1px solid #ffffff55;border-radius:8px;padding:6px 10px;color:white;background:transparent">Log out admin</button></div></header>
 <main>
-<section class="cards">
-<div class="stat"><div class="label">TOTAL CREDIT</div><div class="value" id="totalCredit">৳0</div></div>
-<div class="stat"><div class="label">TOTAL EXPENSE</div><div class="value" id="totalExpense">৳0</div></div>
-<div class="stat balance"><div class="label">AVAILABLE BALANCE</div><div class="value" id="balance">৳0</div></div>
-<div class="stat"><div class="label">MEMBERS</div><div class="value" id="memberCount">0</div></div>
+<section class="cards" aria-label="Clickable fund summary">
+<div class="stat" role="button" tabindex="0" data-detail="credit" aria-label="View credit details"><div class="label">TOTAL CREDIT</div><div class="value" id="totalCredit">৳0</div></div>
+<div class="stat" role="button" tabindex="0" data-detail="expense" aria-label="View expense details"><div class="label">TOTAL EXPENSE</div><div class="value" id="totalExpense">৳0</div></div>
+<div class="stat balance" role="button" tabindex="0" data-detail="balance" aria-label="View balance details"><div class="label">AVAILABLE BALANCE</div><div class="value" id="balance">৳0</div></div>
+<div class="stat" role="button" tabindex="0" data-detail="members" aria-label="View member details"><div class="label">MEMBERS</div><div class="value" id="memberCount">0</div></div>
 </section>
 <nav class="main-tabs" aria-label="Main sections"><button class="main-tab active" data-view="entry" type="button">1. Data Entry</button><button class="main-tab" data-view="members" type="button">2. Member Details</button><button class="main-tab" data-view="transactions" type="button">3. Transactions</button></nav>
 <div id="view-entry" class="tabview"><div class="layout"><section class="panel">
@@ -65,7 +68,14 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 <div class="tools"><button class="btn secondary" id="importBtn" type="button">Restore backup</button></div>
 <input id="fileInput" type="file" accept=".json,application/json" hidden>
 </section></div></div>
-</main><footer>Tour Fund Manager · Amounts shown in Bangladeshi Taka (৳)</footer>
+</main>
+<div id="detailModal" hidden role="presentation">
+  <section class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="detail-head"><h2 id="detailTitle">Details</h2><button type="button" class="detail-close" id="detailClose" aria-label="Close popup">×</button></div>
+    <div id="detailContent"></div>
+  </section>
+</div>
+<footer>Tour Fund Manager · Amounts shown in Bangladeshi Taka (৳)</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://vpfrjftqmgqoxwxqsbsm.supabase.co";
@@ -96,6 +106,26 @@ $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const emai
 $('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();isAdmin=false;updateAuthUI();await loadSharedData()});
 window.addEventListener('online',()=>{updateSyncStatus();loadSharedData()});window.addEventListener('offline',updateSyncStatus);
 window.addEventListener('beforeunload',()=>{if(pendingSync)localStorage.setItem(PENDING_KEY,'1')});
+
+
+function openDashboardDetail(type){
+ const modal=$('detailModal'),content=$('detailContent'),title=$('detailTitle');
+ if(!modal||!content||!title)return;
+ const tx=[...state.transactions].sort((a,b)=>Number(b.id)-Number(a.id));
+ const totalsNow=totals();
+ const row=(t)=>{const kind=t.type==='credit'?'Credit':t.type==='expense'?'Expense':'Note';const signed=t.type==='credit'?'+':t.type==='expense'?'−':'';const cls=t.type==='credit'?'credit':t.type==='expense'?'debit':'';return '<div class="detail-row"><div class="detail-main"><div class="detail-title">'+esc(t.memberId||'General tour expense')+' · '+kind+'</div><div class="detail-meta">'+esc(formatDateTime(t.date))+(t.comment?' · '+esc(t.comment):'')+'</div></div><div class="detail-amount '+cls+'">'+signed+money(t.amount)+'</div></div>'};
+ let items=[],sum=0;
+ if(type==='credit'){title.textContent='Total Credit Details';items=tx.filter(t=>t.type==='credit');sum=totalsNow.credit}
+ else if(type==='expense'){title.textContent='Total Expense Details';items=tx.filter(t=>t.type==='expense');sum=totalsNow.expense}
+ else if(type==='balance'){title.textContent='Available Balance Details';content.innerHTML='<div class="detail-summary"><span>Total credit</span><strong class="credit">'+money(totalsNow.credit)+'</strong></div><div class="detail-summary"><span>Total expense</span><strong class="debit">'+money(totalsNow.expense)+'</strong></div><div class="detail-summary"><span>Available balance</span><strong>'+money(totalsNow.balance)+'</strong></div><h3 style="font-size:13px;margin:14px 0 4px">Latest transactions</h3>'+ (tx.filter(t=>t.type==='credit'||t.type==='expense').slice(0,12).map(row).join('')||'<div class="detail-empty">No transactions found.</div>');modal.hidden=false;$('detailClose').focus();return}
+ else if(type==='members'){title.textContent='Member Details';content.innerHTML='<div class="detail-summary"><span>Total members</span><strong>'+state.members.length+'</strong></div>'+ (state.members.map(m=>{const paid=memberTotals(m.name).credit;const target=Number(m.target||0);return '<div class="detail-row"><div class="detail-main"><div class="detail-title">'+esc(m.name)+'</div><div class="detail-meta">Expected contribution: '+money(target)+'</div></div><div class="detail-amount credit">'+money(paid)+'</div></div>'}).join('')||'<div class="detail-empty">No members found.</div>');modal.hidden=false;$('detailClose').focus();return}
+ content.innerHTML='<div class="detail-summary"><span>'+(type==='credit'?'Credit transactions':'Expense transactions')+'</span><strong>'+money(sum)+'</strong></div>'+ (items.map(row).join('')||'<div class="detail-empty">No transactions found.</div>');
+ modal.hidden=false;$('detailClose').focus();
+}
+document.querySelectorAll('[data-detail]').forEach(card=>{card.addEventListener('click',()=>openDashboardDetail(card.dataset.detail));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDashboardDetail(card.dataset.detail)}})});
+$('detailClose').addEventListener('click',()=>$('detailModal').hidden=true);
+$('detailModal').addEventListener('click',e=>{if(e.target===$('detailModal'))$('detailModal').hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('detailModal').hidden)$('detailModal').hidden=true});
 
 function totals(){let credit=0,expense=0;state.transactions.forEach(t=>{if(t.type==='credit')credit+=Number(t.amount);else expense+=Number(t.amount)});return {credit,expense,balance:credit-expense}}
 function memberTotals(name){let credit=0;state.transactions.filter(t=>t.memberId===name&&t.type==='credit').forEach(t=>credit+=Number(t.amount));return {credit,expense:0,net:credit}}
