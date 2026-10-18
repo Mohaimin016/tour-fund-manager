@@ -66,7 +66,7 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 <div id="locationStatus" class="tracking-status" role="status">Open this page using the app link to view shared locations. Enter your name and enable sharing to publish your location.</div>
 <div class="tracking-actions"><button class="btn" id="startLocationBtn" type="button">Enable my location</button><button class="btn secondary" id="stopLocationBtn" type="button">Stop sharing</button></div>
 <p style="font-size:11px;color:var(--muted);line-height:1.5">Your browser will ask for location permission. Sharing continues only while this page is open and your browser permits location access. You can stop sharing any time. Anyone with the app link can view shared locations. Do not share if you do not want your location public.</p>
-<div class="map-mode-switch" role="group" aria-label="Map appearance"><button class="map-mode-btn active" id="mapDayBtn" type="button" aria-pressed="true">☀️ Day mode</button><button class="map-mode-btn" id="mapDarkBtn" type="button" aria-pressed="false">🌙 Dark mode</button></div><div class="map-fullscreen-controls"><button class="map-mode-btn" id="fullscreenMapBtn" type="button" aria-pressed="false">⛶ Fullscreen map</button><button class="map-mode-btn" id="fitAllLocationsBtn" type="button" aria-pressed="false" style="background:#123c35;color:#fff;border-color:#123c35">📍 Fit all users · OFF</button></div><div id="teamMap" aria-label="Map showing shared team locations"></div>
+<div class="map-mode-switch" role="group" aria-label="Map appearance"><button class="map-mode-btn active" id="mapDayBtn" type="button" aria-pressed="true">☀️ Day mode</button><button class="map-mode-btn" id="mapDarkBtn" type="button" aria-pressed="false">🌙 Dark mode</button></div><div class="map-fullscreen-controls"><button class="map-mode-btn" id="fullscreenMapBtn" type="button" aria-pressed="false">⛶ Fullscreen map</button><button class="map-mode-btn" id="keepScreenAwakeBtn" type="button" aria-pressed="false">☀ Keep screen awake · OFF</button><button class="map-mode-btn" id="fitAllLocationsBtn" type="button" aria-pressed="false" style="background:#123c35;color:#fff;border-color:#123c35">📍 Fit all users · OFF</button></div><div id="teamMap" aria-label="Map showing shared team locations"></div>
 <h2 style="margin-top:14px">Team members</h2><div id="locationPeople"><div class="empty">Sign in to view shared locations.</div></div>
 </section></div>
 <div id="view-transactions" class="tabview" hidden><div class="layout"><section class="panel wide">
@@ -261,6 +261,34 @@ async function stopLocationSharing(clearConsent=true){
 $('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||'';
 let mapFullscreenActive=false;
 function setMapFullscreen(enabled){mapFullscreenActive=!!enabled;const mapEl=$('teamMap'),btn=$('fullscreenMapBtn');mapEl.classList.toggle('map-fullscreen',mapFullscreenActive);document.body.classList.toggle('map-fullscreen-active',mapFullscreenActive);btn.textContent=mapFullscreenActive?'− Minimize screen':'⛶ Fullscreen map';btn.setAttribute('aria-pressed',String(mapFullscreenActive));if(locationMap){setTimeout(()=>locationMap.invalidateSize({pan:false}),100);setTimeout(()=>locationMap.invalidateSize({pan:false}),350)}}
+let keepScreenAwakeEnabled=localStorage.getItem('tourFundKeepScreenAwake_v1')==='1';
+let screenWakeLock=null;
+function updateKeepScreenButton(){
+ const b=$('keepScreenAwakeBtn');
+ b.textContent=keepScreenAwakeEnabled?'☀ Keep screen awake · ON':'☀ Keep screen awake · OFF';
+ b.setAttribute('aria-pressed',String(keepScreenAwakeEnabled));
+ b.classList.toggle('active',keepScreenAwakeEnabled);
+}
+async function requestScreenWakeLock(){
+ if(!keepScreenAwakeEnabled||document.hidden||!('wakeLock' in navigator))return;
+ try{screenWakeLock=await navigator.wakeLock.request('screen');screenWakeLock.addEventListener('release',()=>{screenWakeLock=null;});}
+ catch(e){locationMessage('Keep screen awake is not available: '+(e.message||'browser restriction'));}
+}
+$('keepScreenAwakeBtn').addEventListener('click',async()=>{
+ keepScreenAwakeEnabled=!keepScreenAwakeEnabled;
+ localStorage.setItem('tourFundKeepScreenAwake_v1',keepScreenAwakeEnabled?'1':'0');
+ updateKeepScreenButton();
+ if(keepScreenAwakeEnabled){
+  if(!('wakeLock' in navigator)){locationMessage('This browser does not support Keep Screen Awake. Try updating Chrome.');return;}
+  await requestScreenWakeLock();
+  if(screenWakeLock)locationMessage('Keep screen awake is ON while this page stays visible. Background location is not guaranteed when screen is off.');
+ }else{
+  if(screenWakeLock){try{await screenWakeLock.release()}catch(e){}screenWakeLock=null;}
+  locationMessage('Keep screen awake is OFF.');
+ }
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(screenWakeLock){screenWakeLock.release().catch(()=>{});screenWakeLock=null;}}else if(keepScreenAwakeEnabled){requestScreenWakeLock();}});
+updateKeepScreenButton();
 $('fullscreenMapBtn').addEventListener('click',()=>setMapFullscreen(!mapFullscreenActive));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mapFullscreenActive)setMapFullscreen(false)});
 $('fitAllLocationsBtn').addEventListener('click',()=>{locationAutoFitEnabled=!locationAutoFitEnabled;$('fitAllLocationsBtn').classList.toggle('active',locationAutoFitEnabled);$('fitAllLocationsBtn').setAttribute('aria-pressed',String(locationAutoFitEnabled));$('fitAllLocationsBtn').textContent=locationAutoFitEnabled?'📍 Fit all users · ON':'📍 Fit all users · OFF';$('fitAllLocationsBtn').style.background=locationAutoFitEnabled?'#d9ae55':'#123c35';$('fitAllLocationsBtn').style.color=locationAutoFitEnabled?'#18251f':'#fff';if(locationAutoFitEnabled){const points=Array.from(locationMarkers.values()).map(m=>m.getLatLng()).map(p=>[p.lat,p.lng]);if(points.length)fitAllUserLocations(points);locationMessage('Auto-fit is ON · map will frame all shared users as locations update.');}else{locationMessage('Auto-fit is OFF · map zoom and position stay where you set them.');}});
