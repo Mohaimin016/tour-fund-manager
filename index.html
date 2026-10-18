@@ -213,14 +213,14 @@ function initLocationMap(){
  applyLocationMapMode(locationMapMode);
 }
 function fitAllUserLocations(points){if(!locationMap||!points||!points.length)return;if(points.length===1)locationMap.setView(points[0],15);else locationMap.fitBounds(points,{padding:[25,25],maxZoom:15})}
-function markerPopup(p){return '<strong>'+esc(p.display_name||'Team member')+'</strong><br>Updated: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' <br>Accuracy: ±'+Math.round(p.accuracy_m)+' m':'')}
+function markerPopup(p){return '<strong>'+esc(p.display_name||'Team member')+'</strong><br>Updated: '+esc(new Date(p.updated_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}))+(p.accuracy_m?' <br>Accuracy: ±'+Math.round(p.accuracy_m)+' m':'')}
 async function refreshTeamLocations(){
  const {data,error}=await supabaseClient.from('tour_fund_locations').select('user_id,display_name,latitude,longitude,accuracy_m,sharing_enabled,updated_at').eq('sharing_enabled',true).order('updated_at',{ascending:false});
  if(error){$('locationPeople').innerHTML='<div class="empty">Could not load locations: '+esc(error.message)+'</div>';locationMessage('Could not load public locations. Please refresh the page.');return}
  initLocationMap();if(!locationMap)return;
  const visible=new Set((data||[]).map(p=>p.user_id));
  locationMarkers.forEach((marker,id)=>{if(!visible.has(id)){locationMap.removeLayer(marker);locationMarkers.delete(id)}});
- $('locationPeople').innerHTML=(data||[]).map(p=>'<div class="location-person"><strong>'+esc(p.display_name)+'</strong><br>Last update: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>').join('')||'<div class="empty">No team members are currently sharing location.</div>';
+ $('locationPeople').innerHTML=(data||[]).map(p=>'<div class="location-person"><strong>'+esc(p.display_name)+'</strong><br>Last update: '+esc(new Date(p.updated_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}))+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>').join('')||'<div class="empty">No team members are currently sharing location.</div>';
  (data||[]).forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){const marker=locationMarkers.get(p.user_id);marker.setLatLng(ll).setPopupContent(markerPopup(p));if(marker.getTooltip())marker.setTooltipContent(esc(p.display_name||'Team member'));else marker.bindTooltip(esc(p.display_name||'Team member'),{permanent:true,direction:'top',offset:[0,-12],className:'member-map-label'})}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)).bindTooltip(esc(p.display_name||'Team member'),{permanent:true,direction:'top',offset:[0,-12],className:'member-map-label'}))}});
  const points=(data||[]).filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(!locationInitialBoundsSet&&points.length){fitAllUserLocations(points);locationInitialBoundsSet=true}else if(locationAutoFitEnabled&&points.length){fitAllUserLocations(points)}
 }
@@ -232,7 +232,7 @@ async function sendMyLocation(position){
  const {error}=await supabaseClient.from('tour_fund_locations').upsert(payload,{onConflict:'user_id'});
  if(error){locationMessage('Location update failed: '+error.message);return}
  localStorage.setItem('tourFundPublicLocationName_v1',displayName);
- locationMessage('Sharing is ON · last updated '+new Date().toLocaleTimeString());
+ locationMessage('Sharing is ON · last updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}));
  refreshTeamLocations();
 }
 function startLocationSharing(){
