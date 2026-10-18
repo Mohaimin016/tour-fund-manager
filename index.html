@@ -63,7 +63,7 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 <div id="locationStatus" class="tracking-status" role="status">Open this page using the app link to view shared locations. Enter your name and enable sharing to publish your location.</div>
 <div class="tracking-actions"><button class="btn" id="startLocationBtn" type="button">Enable my location</button><button class="btn secondary" id="stopLocationBtn" type="button">Stop sharing</button></div>
 <p style="font-size:11px;color:var(--muted);line-height:1.5">Your browser will ask for location permission. Sharing continues only while this page is open and your browser permits location access. You can stop sharing any time. Anyone with the app link can view shared locations. Do not share if you do not want your location public.</p>
-<div class="map-mode-switch" role="group" aria-label="Map appearance"><button class="map-mode-btn active" id="mapDayBtn" type="button" aria-pressed="true">☀️ Day mode</button><button class="map-mode-btn" id="mapDarkBtn" type="button" aria-pressed="false">🌙 Dark mode</button></div><div id="teamMap" aria-label="Map showing shared team locations"></div>
+<div class="map-mode-switch" role="group" aria-label="Map controls"><button class="map-mode-btn active" id="mapDayBtn" type="button" aria-pressed="true">☀️ Day mode</button><button class="map-mode-btn" id="mapDarkBtn" type="button" aria-pressed="false">🌙 Dark mode</button><button class="map-mode-btn" id="fitAllLocationsBtn" type="button" aria-pressed="false">📍 Fit all users</button></div><div id="teamMap" aria-label="Map showing shared team locations"></div>
 <h2 style="margin-top:14px">Team members</h2><div id="locationPeople"><div class="empty">Sign in to view shared locations.</div></div>
 </section></div>
 <div id="view-transactions" class="tabview" hidden><div class="layout"><section class="panel wide">
@@ -180,7 +180,7 @@ $('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin log
 document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
 
 /* Public-link location sharing: visitors do not need to sign in. */
-let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationInitialBoundsSet=false, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day";
+let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationInitialBoundsSet=false, locationAutoFitEnabled=false, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day";
 const LOCATION_CONSENT_KEY='tourFundLocationConsent_v2';
 const LOCATION_VISITOR_KEY='tourFundPublicLocationVisitor_v1';
 function getLocationVisitorId(){
@@ -208,6 +208,7 @@ function initLocationMap(){
  locationMap=L.map('teamMap').setView([23.8103,90.4125],11);
  applyLocationMapMode(locationMapMode);
 }
+function fitAllUserLocations(points){if(!locationMap||!points||!points.length)return;if(points.length===1)locationMap.setView(points[0],15);else locationMap.fitBounds(points,{padding:[25,25],maxZoom:15})}
 function markerPopup(p){return '<strong>'+esc(p.display_name||'Team member')+'</strong><br>Updated: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' <br>Accuracy: ±'+Math.round(p.accuracy_m)+' m':'')}
 async function refreshTeamLocations(){
  const {data,error}=await supabaseClient.from('tour_fund_locations').select('user_id,display_name,latitude,longitude,accuracy_m,sharing_enabled,updated_at').eq('sharing_enabled',true).order('updated_at',{ascending:false});
@@ -217,7 +218,7 @@ async function refreshTeamLocations(){
  locationMarkers.forEach((marker,id)=>{if(!visible.has(id)){locationMap.removeLayer(marker);locationMarkers.delete(id)}});
  $('locationPeople').innerHTML=(data||[]).map(p=>'<div class="location-person"><strong>'+esc(p.display_name)+'</strong><br>Last update: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>').join('')||'<div class="empty">No team members are currently sharing location.</div>';
  (data||[]).forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){locationMarkers.get(p.user_id).setLatLng(ll).setPopupContent(markerPopup(p))}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)))}});
- if(!locationInitialBoundsSet&&data&&data.length){const points=data.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(points.length===1){locationMap.setView(points[0],15);locationInitialBoundsSet=true}else if(points.length>1){locationMap.fitBounds(points,{padding:[25,25],maxZoom:15});locationInitialBoundsSet=true}}
+ const points=(data||[]).filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(!locationInitialBoundsSet&&points.length){fitAllUserLocations(points);locationInitialBoundsSet=true}else if(locationAutoFitEnabled&&points.length){fitAllUserLocations(points)}
 }
 async function sendMyLocation(position){
  const visitorId=getLocationVisitorId();
@@ -251,6 +252,7 @@ async function stopLocationSharing(clearConsent=true){
  refreshTeamLocations();
 }
 $('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||'';
+$('fitAllLocationsBtn').addEventListener('click',()=>{locationAutoFitEnabled=!locationAutoFitEnabled;$('fitAllLocationsBtn').classList.toggle('active',locationAutoFitEnabled);$('fitAllLocationsBtn').setAttribute('aria-pressed',String(locationAutoFitEnabled));if(locationAutoFitEnabled){const points=Array.from(locationMarkers.values()).map(m=>m.getLatLng()).map(p=>[p.lat,p.lng]);if(points.length)fitAllUserLocations(points);locationMessage('Auto-fit is ON · map will frame all shared users as locations update.');}else{locationMessage('Auto-fit is OFF · map zoom and position stay where you set them.');}});
 $('mapDayBtn').addEventListener('click',()=>applyLocationMapMode('day'));
 $('mapDarkBtn').addEventListener('click',()=>applyLocationMapMode('dark'));
 $('mapDayBtn').classList.toggle('active',locationMapMode==='day');$('mapDarkBtn').classList.toggle('active',locationMapMode==='dark');$('mapDayBtn').setAttribute('aria-pressed',String(locationMapMode==='day'));$('mapDarkBtn').setAttribute('aria-pressed',String(locationMapMode==='dark'));
