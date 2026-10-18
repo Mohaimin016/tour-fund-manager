@@ -25,6 +25,7 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 #detailModal{position:fixed;inset:0;z-index:1000;background:#071b17a8;display:flex;align-items:center;justify-content:center;padding:14px}
 #detailModal[hidden]{display:none!important}.detail-dialog{width:min(680px,100%);max-height:85vh;overflow:auto;background:white;border-radius:15px;padding:16px;box-shadow:0 20px 60px #0004}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:8px}.detail-head h2{margin:0}.detail-close{border:1px solid var(--line);border-radius:8px;background:#f5f8f6;color:var(--green);font-size:20px;line-height:1;padding:7px 11px}.detail-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;background:#f4f7f5;border-radius:9px;margin-bottom:8px}.detail-summary strong{font-size:18px}.detail-row{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:flex-start}.detail-row:last-child{border-bottom:0}.detail-main{min-width:0}.detail-title{font-weight:750;font-size:13px;overflow-wrap:anywhere}.detail-meta{font-size:11px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.detail-amount{font-weight:850;white-space:nowrap;font-size:13px}.detail-empty{padding:22px 8px;text-align:center;color:var(--muted)}@media(max-width:420px){.detail-dialog{padding:12px}.detail-row{gap:7px}.detail-amount{font-size:12px}}
 #teamMap{height:340px;border-radius:10px;border:1px solid var(--line);z-index:1}
+#teamMap.map-dark-mode .leaflet-tile-pane{filter:invert(100%) hue-rotate(180deg) brightness(88%) contrast(90%)}
 #teamMap.map-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;height:100vh!important;z-index:2000!important;border:0!important;border-radius:0!important}body.map-fullscreen-active{overflow:hidden!important}.map-fullscreen-controls{display:flex;gap:6px;margin:8px 0}.map-fullscreen-controls .map-mode-btn{min-height:42px}
 .leaflet-tooltip.member-map-label{background:#fff;color:#123c35;border:2px solid #123c35;border-radius:7px;box-shadow:0 2px 8px #0004;font-weight:850;font-size:12px;padding:4px 7px;white-space:nowrap}.leaflet-tooltip-top.member-map-label:before{border-top-color:#123c35}.map-mode-switch{display:flex;gap:6px;margin:8px 0}.map-mode-btn{flex:1;border:1px solid var(--line);background:white;color:var(--green);border-radius:8px;padding:8px;font-weight:750;font-size:12px}.map-mode-btn.active{background:var(--green);color:white;border-color:var(--green)}.tracking-status{font-size:12px;padding:9px;background:#f4f7f5;border-radius:8px;color:var(--green);margin:8px 0}.location-person{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}.location-person:last-child{border-bottom:0}.tracking-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tracking-actions .btn{margin-top:0}footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 @media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}.layout>.panel,.layout>.recent-panel{margin-top:9px;min-width:0}.wide{grid-column:1/-1}}
@@ -191,9 +192,10 @@ function getLocationVisitorId(){
  return id;
 }
 function locationMessage(msg){const el=$('locationStatus');if(el)el.textContent=msg}
-function mapTileUrl(mode){return mode==='dark'?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
+function mapTileUrl(mode){return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
 function applyLocationMapMode(mode){
  locationMapMode=mode==='dark'?'dark':'day';
+ $('teamMap').classList.toggle('map-dark-mode',locationMapMode==='dark');
  localStorage.setItem('tourFundLocationMapMode_v1',locationMapMode);
  $('mapDayBtn').classList.toggle('active',locationMapMode==='day');
  $('mapDarkBtn').classList.toggle('active',locationMapMode==='dark');
@@ -201,7 +203,7 @@ function applyLocationMapMode(mode){
  $('mapDarkBtn').setAttribute('aria-pressed',String(locationMapMode==='dark'));
  if(locationMap&&window.L){
   if(locationTileLayer)locationMap.removeLayer(locationTileLayer);
-  const attribution=locationMapMode==='dark'?'&copy; OpenStreetMap contributors &copy; CARTO':'&copy; OpenStreetMap contributors';
+  const attribution='&copy; OpenStreetMap contributors';
   locationTileLayer=L.tileLayer(mapTileUrl(locationMapMode),{maxZoom:19,attribution}).addTo(locationMap);
  }
 }
