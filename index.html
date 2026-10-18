@@ -271,7 +271,9 @@ $('startLocationBtn').addEventListener('click',startLocationSharing);
 $('stopLocationBtn').addEventListener('click',()=>stopLocationSharing(true));
 if(locationRefreshTimer)clearInterval(locationRefreshTimer);
 locationRefreshTimer=setInterval(()=>{if(!document.hidden)refreshTeamLocations()},15000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTeamLocations()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==='1'&&locationWatchId===null){$('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||$('locationDisplayName').value;startLocationSharing();}}});
+window.addEventListener('pageshow',()=>{refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==='1'&&locationWatchId===null){$('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||$('locationDisplayName').value;startLocationSharing();}});
+window.addEventListener('focus',()=>{if(localStorage.getItem(LOCATION_CONSENT_KEY)==='1'&&locationWatchId===null){$('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||$('locationDisplayName').value;startLocationSharing();}});
 render();setType('expense');updateAuthUI();loadSharedData();
 setTimeout(()=>{initLocationMap();refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==="1")startLocationSharing()},500);
 </script>
