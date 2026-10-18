@@ -24,7 +24,7 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 .stat{cursor:pointer;transition:transform .12s,box-shadow .12s}.stat:hover,.stat:focus-visible{transform:translateY(-1px);box-shadow:0 5px 16px #123c3518;outline:2px solid #d9ae55;outline-offset:1px}
 #detailModal{position:fixed;inset:0;z-index:1000;background:#071b17a8;display:flex;align-items:center;justify-content:center;padding:14px}
 #detailModal[hidden]{display:none!important}.detail-dialog{width:min(680px,100%);max-height:85vh;overflow:auto;background:white;border-radius:15px;padding:16px;box-shadow:0 20px 60px #0004}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:8px}.detail-head h2{margin:0}.detail-close{border:1px solid var(--line);border-radius:8px;background:#f5f8f6;color:var(--green);font-size:20px;line-height:1;padding:7px 11px}.detail-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;background:#f4f7f5;border-radius:9px;margin-bottom:8px}.detail-summary strong{font-size:18px}.detail-row{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:flex-start}.detail-row:last-child{border-bottom:0}.detail-main{min-width:0}.detail-title{font-weight:750;font-size:13px;overflow-wrap:anywhere}.detail-meta{font-size:11px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.detail-amount{font-weight:850;white-space:nowrap;font-size:13px}.detail-empty{padding:22px 8px;text-align:center;color:var(--muted)}@media(max-width:420px){.detail-dialog{padding:12px}.detail-row{gap:7px}.detail-amount{font-size:12px}}
-footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
+#teamMap{height:340px;border-radius:10px;border:1px solid var(--line);z-index:1}.tracking-status{font-size:12px;padding:9px;background:#f4f7f5;border-radius:8px;color:var(--green);margin:8px 0}.location-person{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}.location-person:last-child{border-bottom:0}.tracking-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tracking-actions .btn{margin-top:0}footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 @media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}.layout>.panel,.layout>.recent-panel{margin-top:9px;min-width:0}.wide{grid-column:1/-1}}
 </style>
 </head>
@@ -37,7 +37,7 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 <div class="stat balance" role="button" tabindex="0" data-detail="balance" aria-label="View balance details"><div class="label">AVAILABLE BALANCE</div><div class="value" id="balance">৳0</div></div>
 <div class="stat" role="button" tabindex="0" data-detail="members" aria-label="View member details"><div class="label">MEMBERS</div><div class="value" id="memberCount">0</div></div>
 </section>
-<nav class="main-tabs" aria-label="Main sections"><button class="main-tab active" data-view="entry" type="button">1. Data Entry</button><button class="main-tab" data-view="members" type="button">2. Member Details</button><button class="main-tab" data-view="transactions" type="button">3. Transactions</button></nav>
+<nav class="main-tabs" aria-label="Main sections"><button class="main-tab active" data-view="entry" type="button">1. Data Entry</button><button class="main-tab" data-view="members" type="button">2. Member Details</button><button class="main-tab" data-view="transactions" type="button">3. Transactions</button><button class="main-tab" data-view="location" type="button">4. Live Map</button></nav>
 <div id="view-entry" class="tabview"><div class="layout"><section class="panel">
 <h2>➕ Add transaction</h2><p class="sub">Choose credit or expense; totals update automatically.</p>
 <div class="tabs">
@@ -56,6 +56,14 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
 <h2>👥 Member summary</h2><p class="sub">Total amount paid by each member.</p>
 <div id="membersList"></div>
 <button class="btn secondary" id="addMemberBtn" type="button">＋ Add new member</button>
+</section></div>
+<div id="view-location" class="tabview" hidden><section class="panel">
+<h2>📍 Team live locations</h2><p class="sub">Location sharing is optional and only starts after each member explicitly enables it. Signed-in members can view shared locations.</p>
+<div id="locationStatus" class="tracking-status" role="status">Sign in, then enable location sharing if you want to share your location.</div>
+<div class="tracking-actions"><button class="btn" id="startLocationBtn" type="button">Enable my location</button><button class="btn secondary" id="stopLocationBtn" type="button">Stop sharing</button></div>
+<p style="font-size:11px;color:var(--muted);line-height:1.5">Your browser will ask for location permission. Sharing continues only while this page is open and your browser permits location access. You can stop sharing any time. Latest location is visible to all signed-in team members.</p>
+<div id="teamMap" aria-label="OpenStreetMap showing shared team locations"></div>
+<h2 style="margin-top:14px">Team members</h2><div id="locationPeople"><div class="empty">Sign in to view shared locations.</div></div>
 </section></div>
 <div id="view-transactions" class="tabview" hidden><div class="layout"><section class="panel wide">
 <h2>🧾 Transaction history</h2>
@@ -76,6 +84,7 @@ footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
   </section>
 </div>
 <footer>Tour Fund Manager · Amounts shown in Bangladeshi Taka (৳)</footer>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://vpfrjftqmgqoxwxqsbsm.supabase.co";
@@ -168,6 +177,67 @@ $('importBtn').addEventListener('click',()=>{if(!isAdmin){alert('Admin login req
 $('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin login required to restore data.');e.target.value='';return}const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.members)||!Array.isArray(data.transactions))throw Error('Invalid backup');if(confirm('Restore backup and replace current data?')){state=data;save();alert('Backup restored.')}}catch(err){alert('Could not read backup file.')}e.target.value=''});
 
 document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
+
+/* Consented team location sharing */
+let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null;
+const LOCATION_CONSENT_KEY='tourFundLocationConsent_v1';
+function locationMessage(msg){const el=$('locationStatus');if(el)el.textContent=msg}
+function initLocationMap(){
+ if(locationMap||!window.L)return;
+ locationMap=L.map('teamMap').setView([23.8103,90.4125],11);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(locationMap);
+}
+function markerPopup(p){return '<strong>'+esc(p.display_name||'Team member')+'</strong><br>Updated: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' <br>Accuracy: ±'+Math.round(p.accuracy_m)+' m':'')}
+async function refreshTeamLocations(){
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(!session){$('locationPeople').innerHTML='<div class="empty">Please sign in to view team locations.</div>';return}
+ const {data,error}=await supabaseClient.from('tour_fund_locations').select('user_id,display_name,latitude,longitude,accuracy_m,sharing_enabled,updated_at').eq('sharing_enabled',true).order('updated_at',{ascending:false});
+ if(error){$('locationPeople').innerHTML='<div class="empty">Could not load locations: '+esc(error.message)+'</div>';return}
+ initLocationMap();if(!locationMap)return;
+ const visible=new Set((data||[]).map(p=>p.user_id));
+ locationMarkers.forEach((marker,id)=>{if(!visible.has(id)){locationMap.removeLayer(marker);locationMarkers.delete(id)}});
+ $('locationPeople').innerHTML=(data||[]).map(p=>'<div class="location-person"><strong>'+esc(p.display_name)+'</strong><br>Last update: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>').join('')||'<div class="empty">No team members are currently sharing location.</div>';
+ (data||[]).forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){locationMarkers.get(p.user_id).setLatLng(ll).setPopupContent(markerPopup(p))}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)))}}); 
+ if(data&&data.length){const points=data.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(points.length===1)locationMap.setView(points[0],15);else if(points.length>1)locationMap.fitBounds(points,{padding:[25,25],maxZoom:15})}
+}
+async function sendMyLocation(position){
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(!session){stopLocationSharing(false);locationMessage('Session expired. Sign in again to share location.');return}
+ const user=session.user, displayName=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'Team member';
+ const payload={user_id:user.id,display_name:displayName,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,sharing_enabled:true,updated_at:new Date().toISOString()};
+ const {error}=await supabaseClient.from('tour_fund_locations').upsert(payload,{onConflict:'user_id'});
+ if(error){locationMessage('Location update failed: '+error.message);return}
+ locationMessage('Sharing is ON · last updated '+new Date().toLocaleTimeString());
+ refreshTeamLocations();
+}
+function startLocationSharing(){
+ if(!navigator.geolocation){locationMessage('This browser does not support geolocation.');return}
+ if(!window.isSecureContext){locationMessage('Location access requires HTTPS. Open the GitHub Pages HTTPS address.');return}
+ if(locationWatchId!==null)return;
+ if(!confirm('Enable ongoing location sharing? While enabled, your location will be shared with all signed-in team members. You can stop at any time.'))return;
+ localStorage.setItem(LOCATION_CONSENT_KEY,'1');
+ locationMessage('Waiting for browser location permission…');
+ locationWatchId=navigator.geolocation.watchPosition(sendMyLocation,err=>{locationMessage('Location unavailable: '+({1:'permission denied',2:'position unavailable',3:'request timed out'}[err.code]||err.message));if(err.code===1)stopLocationSharing(false)},{enableHighAccuracy:true,maximumAge:15000,timeout:20000});
+}
+async function stopLocationSharing(clearConsent=true){
+ if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
+ if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(session){const {error}=await supabaseClient.from('tour_fund_locations').delete().eq('user_id',session.user.id);if(error)locationMessage('Sharing stopped on this device, but could not remove the last location: '+error.message);else locationMessage('Location sharing is OFF. Your last shared location was removed.')}
+ else locationMessage('Location sharing is OFF. Sign in to share location.');
+ refreshTeamLocations();
+}
+$('startLocationBtn').addEventListener('click',startLocationSharing);
+$('stopLocationBtn').addEventListener('click',()=>stopLocationSharing(true));
+if(locationRefreshTimer)clearInterval(locationRefreshTimer);
+locationRefreshTimer=setInterval(()=>{if(!document.hidden)refreshTeamLocations()},15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTeamLocations()});
+supabaseClient.auth.onAuthStateChange((_event,session)=>{
+ if(session){setTimeout(()=>{refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==='1'&&locationWatchId===null)startLocationSharing()},0)}
+ else{if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}locationMessage('Signed out. Location sharing paused.');refreshTeamLocations()}
+});
+
 render();setType('expense');updateAuthUI();loadSharedData();
+setTimeout(()=>{initLocationMap();refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==="1")startLocationSharing()},500);
 </script>
 </body></html>
