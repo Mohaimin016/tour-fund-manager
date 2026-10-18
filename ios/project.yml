@@ -12,7 +12,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mohaimin.tourfundmanager
-        PRODUCT_NAME: Tour Fund Manager
+        PRODUCT_NAME: TourFundManager
         INFOPLIST_KEY_CFBundleDisplayName: Tour Fund
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Tour Fund Manager uses your location to share your position with your tour group."
         INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: "Allow Always location access so Tour Fund Manager can share your location while the app is in the background."
