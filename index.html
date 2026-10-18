@@ -222,7 +222,7 @@ function startLocationSharing(){
  if(locationWatchId!==null)return;
  const displayName=($('locationDisplayName').value||'').trim();
  if(!displayName){locationMessage('Please enter your name before sharing your location.');$('locationDisplayName').focus();return}
- if(!confirm('Share your live location publicly? Anyone with the app link can view it. You can stop sharing at any time.'))return;
+ if(localStorage.getItem(LOCATION_CONSENT_KEY)!=='1'&&!confirm('Share your live location publicly? Anyone with the app link can view it. You can stop sharing at any time.'))return;
  localStorage.setItem(LOCATION_CONSENT_KEY,'1');
  localStorage.setItem('tourFundPublicLocationName_v1',displayName);
  locationMessage('Waiting for browser location permission…');
