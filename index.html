@@ -180,7 +180,7 @@ $('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin log
 document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
 
 /* Public-link location sharing: visitors do not need to sign in. */
-let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day";
+let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationInitialBoundsSet=false, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day";
 const LOCATION_CONSENT_KEY='tourFundLocationConsent_v2';
 const LOCATION_VISITOR_KEY='tourFundPublicLocationVisitor_v1';
 function getLocationVisitorId(){
@@ -217,7 +217,7 @@ async function refreshTeamLocations(){
  locationMarkers.forEach((marker,id)=>{if(!visible.has(id)){locationMap.removeLayer(marker);locationMarkers.delete(id)}});
  $('locationPeople').innerHTML=(data||[]).map(p=>'<div class="location-person"><strong>'+esc(p.display_name)+'</strong><br>Last update: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>').join('')||'<div class="empty">No team members are currently sharing location.</div>';
  (data||[]).forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){locationMarkers.get(p.user_id).setLatLng(ll).setPopupContent(markerPopup(p))}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)))}});
- if(data&&data.length){const points=data.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(points.length===1)locationMap.setView(points[0],15);else if(points.length>1)locationMap.fitBounds(points,{padding:[25,25],maxZoom:15})}
+ if(!locationInitialBoundsSet&&data&&data.length){const points=data.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(points.length===1){locationMap.setView(points[0],15);locationInitialBoundsSet=true}else if(points.length>1){locationMap.fitBounds(points,{padding:[25,25],maxZoom:15});locationInitialBoundsSet=true}}
 }
 async function sendMyLocation(position){
  const visitorId=getLocationVisitorId();
