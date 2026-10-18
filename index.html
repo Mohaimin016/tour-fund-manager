@@ -58,10 +58,11 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 <button class="btn secondary" id="addMemberBtn" type="button">＋ Add new member</button>
 </section></div>
 <div id="view-location" class="tabview" hidden><section class="panel">
-<h2>📍 Team live locations</h2><p class="sub">Location sharing is optional and only starts after each member explicitly enables it. Signed-in members can view shared locations.</p>
-<div id="locationStatus" class="tracking-status" role="status">Sign in, then enable location sharing if you want to share your location.</div>
+<h2>📍 Team live locations</h2><p class="sub">Anyone with this app link can view shared locations without signing in. Sharing is optional and requires the member’s consent and browser location permission.</p>
+<label for="locationDisplayName">Your name (shown on the map)</label><input id="locationDisplayName" maxlength="60" placeholder="Enter your name to share location" autocomplete="nickname">
+<div id="locationStatus" class="tracking-status" role="status">Open this page using the app link to view shared locations. Enter your name and enable sharing to publish your location.</div>
 <div class="tracking-actions"><button class="btn" id="startLocationBtn" type="button">Enable my location</button><button class="btn secondary" id="stopLocationBtn" type="button">Stop sharing</button></div>
-<p style="font-size:11px;color:var(--muted);line-height:1.5">Your browser will ask for location permission. Sharing continues only while this page is open and your browser permits location access. You can stop sharing any time. Latest location is visible to all signed-in team members.</p>
+<p style="font-size:11px;color:var(--muted);line-height:1.5">Your browser will ask for location permission. Sharing continues only while this page is open and your browser permits location access. You can stop sharing any time. Anyone with the app link can view shared locations. Do not share if you do not want your location public.</p>
 <div id="teamMap" aria-label="OpenStreetMap showing shared team locations"></div>
 <h2 style="margin-top:14px">Team members</h2><div id="locationPeople"><div class="empty">Sign in to view shared locations.</div></div>
 </section></div>
@@ -87,8 +88,8 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL="https://vpfrjftqmgqoxwxqsbsm.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_SwN8ONdWO1nS3Behi7P_PQ_Bdy_vIGa";
+const SUPABASE_URL="https://ixksktyqzjwudzaciwcr.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_JntqprSibYEaJIRWNjVrEw_5EwC7qvC";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const PENDING_KEY="tourFundManager_pending_ixksktyqzjwudzaciwcr_v1";
 let isAdmin=false, syncBusy=false, pendingSync=localStorage.getItem(PENDING_KEY)==="1";
@@ -178,9 +179,15 @@ $('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin log
 
 document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
 
-/* Consented team location sharing */
+/* Public-link location sharing: visitors do not need to sign in. */
 let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null;
-const LOCATION_CONSENT_KEY='tourFundLocationConsent_v1';
+const LOCATION_CONSENT_KEY='tourFundLocationConsent_v2';
+const LOCATION_VISITOR_KEY='tourFundPublicLocationVisitor_v1';
+function getLocationVisitorId(){
+ let id=localStorage.getItem(LOCATION_VISITOR_KEY);
+ if(!id){id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)});localStorage.setItem(LOCATION_VISITOR_KEY,id)}
+ return id;
+}
 function locationMessage(msg){const el=$('locationStatus');if(el)el.textContent=msg}
 function initLocationMap(){
  if(locationMap||!window.L)return;
@@ -189,24 +196,23 @@ function initLocationMap(){
 }
 function markerPopup(p){return '<strong>'+esc(p.display_name||'Team member')+'</strong><br>Updated: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' <br>Accuracy: ±'+Math.round(p.accuracy_m)+' m':'')}
 async function refreshTeamLocations(){
- const {data:{session}}=await supabaseClient.auth.getSession();
- if(!session){$('locationPeople').innerHTML='<div class="empty">Please sign in to view team locations.</div>';return}
  const {data,error}=await supabaseClient.from('tour_fund_locations').select('user_id,display_name,latitude,longitude,accuracy_m,sharing_enabled,updated_at').eq('sharing_enabled',true).order('updated_at',{ascending:false});
- if(error){$('locationPeople').innerHTML='<div class="empty">Could not load locations: '+esc(error.message)+'</div>';return}
+ if(error){$('locationPeople').innerHTML='<div class="empty">Could not load locations: '+esc(error.message)+'</div>';locationMessage('Could not load public locations. Please refresh the page.');return}
  initLocationMap();if(!locationMap)return;
  const visible=new Set((data||[]).map(p=>p.user_id));
  locationMarkers.forEach((marker,id)=>{if(!visible.has(id)){locationMap.removeLayer(marker);locationMarkers.delete(id)}});
  $('locationPeople').innerHTML=(data||[]).map(p=>'<div class="location-person"><strong>'+esc(p.display_name)+'</strong><br>Last update: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>').join('')||'<div class="empty">No team members are currently sharing location.</div>';
- (data||[]).forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){locationMarkers.get(p.user_id).setLatLng(ll).setPopupContent(markerPopup(p))}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)))}}); 
+ (data||[]).forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){locationMarkers.get(p.user_id).setLatLng(ll).setPopupContent(markerPopup(p))}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)))}});
  if(data&&data.length){const points=data.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(points.length===1)locationMap.setView(points[0],15);else if(points.length>1)locationMap.fitBounds(points,{padding:[25,25],maxZoom:15})}
 }
 async function sendMyLocation(position){
- const {data:{session}}=await supabaseClient.auth.getSession();
- if(!session){stopLocationSharing(false);locationMessage('Session expired. Sign in again to share location.');return}
- const user=session.user, displayName=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'Team member';
- const payload={user_id:user.id,display_name:displayName,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,sharing_enabled:true,updated_at:new Date().toISOString()};
+ const visitorId=getLocationVisitorId();
+ const displayName=($('locationDisplayName').value||'').trim().slice(0,60);
+ if(!displayName){stopLocationSharing(false);locationMessage('Please enter your name before sharing your location.');return}
+ const payload={user_id:visitorId,display_name:displayName,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,sharing_enabled:true,updated_at:new Date().toISOString()};
  const {error}=await supabaseClient.from('tour_fund_locations').upsert(payload,{onConflict:'user_id'});
  if(error){locationMessage('Location update failed: '+error.message);return}
+ localStorage.setItem('tourFundPublicLocationName_v1',displayName);
  locationMessage('Sharing is ON · last updated '+new Date().toLocaleTimeString());
  refreshTeamLocations();
 }
@@ -214,29 +220,28 @@ function startLocationSharing(){
  if(!navigator.geolocation){locationMessage('This browser does not support geolocation.');return}
  if(!window.isSecureContext){locationMessage('Location access requires HTTPS. Open the GitHub Pages HTTPS address.');return}
  if(locationWatchId!==null)return;
- if(!confirm('Enable ongoing location sharing? While enabled, your location will be shared with all signed-in team members. You can stop at any time.'))return;
+ const displayName=($('locationDisplayName').value||'').trim();
+ if(!displayName){locationMessage('Please enter your name before sharing your location.');$('locationDisplayName').focus();return}
+ if(!confirm('Share your live location publicly? Anyone with the app link can view it. You can stop sharing at any time.'))return;
  localStorage.setItem(LOCATION_CONSENT_KEY,'1');
+ localStorage.setItem('tourFundPublicLocationName_v1',displayName);
  locationMessage('Waiting for browser location permission…');
  locationWatchId=navigator.geolocation.watchPosition(sendMyLocation,err=>{locationMessage('Location unavailable: '+({1:'permission denied',2:'position unavailable',3:'request timed out'}[err.code]||err.message));if(err.code===1)stopLocationSharing(false)},{enableHighAccuracy:true,maximumAge:15000,timeout:20000});
 }
 async function stopLocationSharing(clearConsent=true){
  if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
  if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
- const {data:{session}}=await supabaseClient.auth.getSession();
- if(session){const {error}=await supabaseClient.from('tour_fund_locations').delete().eq('user_id',session.user.id);if(error)locationMessage('Sharing stopped on this device, but could not remove the last location: '+error.message);else locationMessage('Location sharing is OFF. Your last shared location was removed.')}
- else locationMessage('Location sharing is OFF. Sign in to share location.');
+ const visitorId=localStorage.getItem(LOCATION_VISITOR_KEY);
+ if(visitorId){const {error}=await supabaseClient.from('tour_fund_locations').delete().eq('user_id',visitorId);if(error)locationMessage('Sharing stopped on this device, but could not remove the last location: '+error.message);else locationMessage('Location sharing is OFF. Your last shared location was removed.')}
+ else locationMessage('Location sharing is OFF.');
  refreshTeamLocations();
 }
+$('locationDisplayName').value=localStorage.getItem('tourFundPublicLocationName_v1')||'';
 $('startLocationBtn').addEventListener('click',startLocationSharing);
 $('stopLocationBtn').addEventListener('click',()=>stopLocationSharing(true));
 if(locationRefreshTimer)clearInterval(locationRefreshTimer);
 locationRefreshTimer=setInterval(()=>{if(!document.hidden)refreshTeamLocations()},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTeamLocations()});
-supabaseClient.auth.onAuthStateChange((_event,session)=>{
- if(session){setTimeout(()=>{refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==='1'&&locationWatchId===null)startLocationSharing()},0)}
- else{if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}locationMessage('Signed out. Location sharing paused.');refreshTeamLocations()}
-});
-
 render();setType('expense');updateAuthUI();loadSharedData();
 setTimeout(()=>{initLocationMap();refreshTeamLocations();if(localStorage.getItem(LOCATION_CONSENT_KEY)==="1")startLocationSharing()},500);
 </script>
