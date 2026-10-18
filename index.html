@@ -1,2 +1,141 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Tour Fund Manager</title></head><body><h1>Upload in progress</h1></body></html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#123c35">
+<title>Tour Fund Manager</title>
+<style>
+:root{--green:#123c35;--mint:#e8f4ef;--gold:#d9ae55;--red:#b93838;--ink:#172521;--muted:#64736d;--line:#e1e9e5;--bg:#f4f7f5}
+*[hidden]{display:none!important}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);padding-bottom:30px}
+header{background:var(--green);color:white;padding:13px 14px 15px;border-radius:0 0 15px 15px}header .eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#c4ded3;font-weight:700}h1{font-size:20px;margin:3px 0}header p{margin:0;color:#d6e6df;font-size:11px}
+main{max-width:900px;margin:auto;padding:9px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:-4px}
+.stat{background:white;padding:9px;border-radius:11px;border:1px solid var(--line);box-shadow:0 3px 12px #123c3508}.stat .label{font-size:12px;color:var(--muted);font-weight:650}.stat .value{font-size:18px;font-weight:800;margin-top:5px;overflow-wrap:anywhere}.stat.balance{background:var(--green);color:white}.stat.balance .label{color:#d0e4dc}
+.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:9px;box-shadow:0 3px 12px #123c3506}
+h2{font-size:15px;margin:0 0 8px}.sub{font-size:12px;color:var(--muted);margin:-7px 0 13px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}.main-tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:7px 0 2px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.main-tab{border:1px solid var(--line);background:white;border-radius:10px;padding:11px 3px;font-weight:800;font-size:12px;color:var(--green)}.main-tab.active{background:var(--green);color:white;border-color:var(--green)}.tabview[hidden]{display:none!important}.tab{border:1px solid var(--line);background:#f7faf8;border-radius:10px;padding:8px 4px;font-weight:750;font-size:12px;color:var(--green)}.tab.active{background:var(--green);color:white;border-color:var(--green)}
+label{display:block;font-size:11px;font-weight:750;color:#52645c;margin:7px 0 4px}
+input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-radius:10px;padding:9px;background:white;color:var(--ink);font-size:15px;min-height:40px}textarea{min-height:72px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{width:100%;border:0;border-radius:9px;background:var(--green);color:white;font-size:14px;font-weight:800;padding:10px;margin-top:9px;min-height:42px}.btn.gold{background:#d9ae55;color:#18251f}.btn.secondary{background:#edf4f0;color:var(--green);border:1px solid var(--line)}.btn.danger{background:#fff0f0;color:var(--red);border:1px solid #f0d2d2}
+.member{border:1px solid var(--line);border-radius:13px;padding:13px;margin-top:9px}.membertop{display:flex;justify-content:space-between;gap:8px;align-items:center}.membername{font-weight:800;font-size:15px}.pill{font-size:11px;background:var(--mint);color:var(--green);border-radius:20px;padding:5px 8px;font-weight:800;white-space:nowrap}.membernums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.num{background:#f5f8f6;border-radius:9px;padding:8px}.num small{display:block;color:var(--muted);font-size:10px}.num strong{font-size:13px;overflow-wrap:anywhere}.memberactions{display:flex;gap:7px;margin-top:10px}.mini{flex:1;border:1px solid var(--line);background:white;color:var(--green);padding:9px 5px;border-radius:8px;font-size:12px;font-weight:750}
+.historyitem{padding:12px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.historyitem:last-child{border-bottom:0}.histtitle{font-size:11px;font-weight:750}.histtitle.credit{color:#19734d}.histtitle.debit{color:var(--red)}.histmeta{font-size:14px;color:var(--green);font-weight:800;margin-top:5px;white-space:pre-wrap;background:#e8f4ef;border-left:3px solid var(--gold);padding:5px 7px;border-radius:5px;line-height:1.35}.histmeta.debit{color:var(--red);background:#fff0f0;border-left-color:var(--red)}.amt{font-size:14px;font-weight:850;white-space:nowrap}.credit{color:#19734d}.debit{color:var(--red)}.empty{font-size:13px;color:var(--muted);padding:12px 0;text-align:center}.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tools .btn{font-size:13px;margin-top:0;padding:12px}.tools .excel-export{width:auto;min-height:32px;padding:6px 10px;font-size:11px;justify-self:start}.filter{margin-bottom:9px}.recent-panel{padding:8px}.recent-panel{align-self:start;min-height:150px;display:block!important;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:9px}.recent-panel h2{display:block;margin:0 0 5px;font-size:14px}.recent-row{display:flex;justify-content:space-between;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid var(--line)}.recent-row:last-child{border-bottom:0}.recent-comment{font-size:11px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}.recent-amount{font-size:11px;font-weight:850;color:var(--red);white-space:nowrap}.recent-empty{font-size:12px;color:var(--muted);padding:5px 0}
+footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 10px}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}.layout>.panel,.layout>.recent-panel{margin-top:9px;min-width:0}.wide{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header><h1>Tour Fund Manager</h1><p>Member credits · Expenses · Live balance</p><div id="syncStatus" role="status" hidden style="display:none!important">Connecting to shared fund…</div><div id="authBox" style="margin-top:8px"><form id="loginForm" style="display:flex;gap:6px;flex-wrap:wrap"><input id="adminEmail" type="email" placeholder="Admin email" autocomplete="username" style="flex:1;min-width:130px;font-size:13px;min-height:36px"><input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="flex:1;min-width:130px;font-size:13px;min-height:36px"><button type="submit" style="border:0;border-radius:8px;padding:7px 12px;font-weight:800;color:#123c35;background:#fff">Admin login</button></form><button id="logoutBtn" type="button" hidden style="margin-top:6px;border:1px solid #ffffff55;border-radius:8px;padding:6px 10px;color:white;background:transparent">Log out admin</button></div></header>
+<main>
+<section class="cards">
+<div class="stat"><div class="label">TOTAL CREDIT</div><div class="value" id="totalCredit">৳0</div></div>
+<div class="stat"><div class="label">TOTAL EXPENSE</div><div class="value" id="totalExpense">৳0</div></div>
+<div class="stat balance"><div class="label">AVAILABLE BALANCE</div><div class="value" id="balance">৳0</div></div>
+<div class="stat"><div class="label">MEMBERS</div><div class="value" id="memberCount">0</div></div>
+</section>
+<nav class="main-tabs" aria-label="Main sections"><button class="main-tab active" data-view="entry" type="button">1. Data Entry</button><button class="main-tab" data-view="members" type="button">2. Member Details</button><button class="main-tab" data-view="transactions" type="button">3. Transactions</button></nav>
+<div id="view-entry" class="tabview"><div class="layout"><section class="panel">
+<h2>➕ Add transaction</h2><p class="sub">Choose credit or expense; totals update automatically.</p>
+<div class="tabs">
+<button class="tab active" data-type="expense" type="button">Expense −</button>
+<button class="tab" data-type="credit" type="button">Credit +</button>
+</div>
+<form id="entryForm">
+<div id="memberField"><label for="member">Member</label><select id="member" required></select></div>
+<div class="row"><div><label for="amount">Amount (৳)</label><input id="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="e.g. 3000" required></div><div><label for="date">Date</label><input id="date" type="date" required></div></div>
+<div id="targetWrap" hidden><label for="target">Expected contribution (৳)</label><input id="target" type="number" min="0" step="0.01" placeholder="Optional target"></div>
+<label for="comment">Comment / Details <span aria-hidden="true" style="color:#c62828">*required</span></label><textarea id="comment" required placeholder="e.g. Payment received, hotel booking..." maxlength="500"></textarea>
+<button class="btn" id="saveBtn" type="submit">Save credit</button>
+</form>
+</section><aside class="recent-panel" aria-live="polite"><h2>Recent expenses · Last 12</h2><div id="recentExpenses"><div class="recent-empty">No expenses yet.</div></div></aside></div></div>
+<div id="view-members" class="tabview" hidden><section class="panel">
+<h2>👥 Member summary</h2><p class="sub">Total amount paid by each member.</p>
+<div id="membersList"></div>
+<button class="btn secondary" id="addMemberBtn" type="button">＋ Add new member</button>
+</section></div>
+<div id="view-transactions" class="tabview" hidden><div class="layout"><section class="panel wide">
+<h2>🧾 Transaction history</h2>
+<input class="filter" id="search" placeholder="Search member or comment..." aria-label="Search transactions">
+<div class="tools"><button class="btn secondary excel-export" id="excelBtn" type="button">Export Excel</button></div>
+<div id="history"></div>
+</section>
+<section class="panel wide">
+<h2>⚙️ Data options</h2><p class="sub">Shared data is loaded from the server. Admin changes are saved locally first and synced when the connection returns.</p>
+<div class="tools"><button class="btn secondary" id="importBtn" type="button">Restore backup</button></div>
+<input id="fileInput" type="file" accept=".json,application/json" hidden>
+</section></div></div>
+</main><footer>Tour Fund Manager · Amounts shown in Bangladeshi Taka (৳)</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://vpfrjftqmgqoxwxqsbsm.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_SwN8ONdWO1nS3Behi7P_PQ_Bdy_vIGa";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const PENDING_KEY="tourFundManager_pending_ixksktyqzjwudzaciwcr_v1";
+let isAdmin=false, syncBusy=false, pendingSync=localStorage.getItem(PENDING_KEY)==="1";
+const STORAGE_KEY='tourFundManager_ixksktyqzjwudzaciwcr_v1';
+const initialData={"members": [{"name": "Nasim", "target": 3000}, {"name": "Apu", "target": 3000}, {"name": "Faysal", "target": 3000}, {"name": "Sohag", "target": 3000}, {"name": "Mohaimin", "target": 0}, {"name": "Tawhid", "target": 0}, {"name": "Fahim", "target": 3000}, {"name": "Iftekhar", "target": 3000}, {"name": "Nurul", "target": 0}], "transactions": [{"id": 1, "date": "2026-10-18", "type": "credit", "memberId": "Nasim", "amount": 3000, "comment": "Paymnet Received"}, {"id": 2, "date": "2026-10-18", "type": "credit", "memberId": "Apu", "amount": 3000, "comment": "Paymnet Received"}, {"id": 3, "date": "2026-10-18", "type": "credit", "memberId": "Faysal", "amount": 3000, "comment": "Paymnet Received"}, {"id": 4, "date": "2026-10-18", "type": "credit", "memberId": "Sohag", "amount": 3000, "comment": "Opening credit from Excel"}, {"id": 5, "date": "2026-10-18", "type": "credit", "memberId": "Fahim", "amount": 3000, "comment": "Paymnet Received"}, {"id": 6, "date": "2026-10-18", "type": "credit", "memberId": "Iftekhar", "amount": 3000, "comment": "Opening credit from Excel"}, {"id": 7, "date": "2026-10-18", "type": "expense", "memberId": "", "amount": 2000, "comment": "Hotel Booking"}], "nextId": 8};
+let state;
+try{state=JSON.parse(localStorage.getItem(STORAGE_KEY))||structuredClone(initialData)}catch(e){state=JSON.parse(JSON.stringify(initialData))}
+if(!state.members)state.members=[];if(!state.transactions)state.transactions=[];if(!state.nextId)state.nextId=1;
+let currentType='expense';
+const $=id=>document.getElementById(id);
+const money=n=>'৳'+Number(n||0).toLocaleString('en-BD',{maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>new Date().toLocaleDateString('en-CA');
+$('date').value=today();
+function save(){if(!isAdmin){alert('Admin login required to change shared data.');return}localStorage.setItem(STORAGE_KEY,JSON.stringify(state));localStorage.setItem(PENDING_KEY,"1");pendingSync=true;render();updateSyncStatus();if(navigator.onLine&&isAdmin)syncToServer()}
+function updateSyncStatus(message){const el=$('syncStatus');if(!el)return;el.hidden=true;el.style.display='none';if(message){el.textContent=message;return}if(!navigator.onLine){el.textContent='Offline · changes saved on this device and queued for sync';return}if(syncBusy){el.textContent='Syncing with shared fund…';return}if(pendingSync){el.textContent=isAdmin?'Pending changes · will upload when connection is available':'Offline changes are waiting · sign in as admin to upload';return}el.textContent='Connected · showing shared fund data'+(isAdmin?' · Admin mode':' · View only')}
+async function syncToServer(){if(syncBusy||!navigator.onLine||!isAdmin)return;syncBusy=true;updateSyncStatus();try{const {data:{session}}=await supabaseClient.auth.getSession();if(!session){isAdmin=false;updateSyncStatus('Please sign in as admin to upload pending changes');return}const {error}=await supabaseClient.from('tour_fund_state').upsert({id:1,payload:state,updated_at:new Date().toISOString()},{onConflict:'id'});if(error)throw error;pendingSync=false;localStorage.removeItem(PENDING_KEY);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));updateSyncStatus('Synced · shared fund is up to date')}catch(err){pendingSync=true;localStorage.setItem(PENDING_KEY,'1');updateSyncStatus('Sync failed · changes remain saved locally; retrying when connected')}finally{syncBusy=false}}
+async function loadSharedData(){if(!navigator.onLine){updateSyncStatus();return}try{const {data:{session}}=await supabaseClient.auth.getSession();isAdmin=!!session&&session.user?.app_metadata?.role==='tour_fund_admin';const {data,error}=await supabaseClient.from('tour_fund_state').select('payload').eq('id',1).maybeSingle();if(error)throw error;if(data&&data.payload){const serverMembers=Array.isArray(data.payload.members)?data.payload.members:[];const serverTransactions=Array.isArray(data.payload.transactions)?data.payload.transactions:[];if(serverMembers.length===0&&serverTransactions.length===0&&isAdmin){if(state.members.length||state.transactions.length){pendingSync=true;localStorage.setItem(PENDING_KEY,'1');updateSyncStatus('Uploading initial fund data…');await syncToServer()}else{state={...state,...data.payload};render();updateSyncStatus('Shared fund is empty')}}else if(pendingSync&&isAdmin){updateSyncStatus('Local changes waiting to upload');await syncToServer()}else{state={...state,...data.payload};if(!state.nextId)state.nextId=Math.max(0,...state.transactions.map(t=>Number(t.id)||0))+1;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));render();if(pendingSync&&!isAdmin){updateSyncStatus('Shared data loaded · sign in as admin to sync local pending changes')}else{pendingSync=false;localStorage.removeItem(PENDING_KEY);updateSyncStatus()}}}else if(isAdmin){pendingSync=true;await syncToServer()}else{updateSyncStatus('No shared data found yet · admin setup required')}}catch(err){console.error('Shared fund load failed:',err);updateSyncStatus('Shared fund load failed: '+(err?.message||'check Supabase connection/policies'))}}
+supabaseClient.auth.onAuthStateChange((_event,session)=>{isAdmin=!!session&&session.user?.app_metadata?.role==='tour_fund_admin';updateAuthUI();if(navigator.onLine){if(isAdmin&&pendingSync)syncToServer();else loadSharedData()}});
+function updateAuthUI(){const login=$('loginForm'),logout=$('logoutBtn');if(login)login.hidden=isAdmin;if(logout)logout.hidden=!isAdmin;document.querySelectorAll('#entryForm input,#entryForm select,#entryForm textarea,#entryForm button,.memberactions button,#addMemberBtn,[data-delete]').forEach(el=>{el.disabled=!isAdmin;el.style.opacity=isAdmin?'1':'.55'});updateSyncStatus()}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const email=$('adminEmail').value.trim(),password=$('adminPassword').value;if(!email||!password)return;const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){alert('Admin login failed. Check the email/password and confirm the admin account is configured.');return}$('adminPassword').value='';isAdmin=true;updateAuthUI();await loadSharedData()});
+$('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();isAdmin=false;updateAuthUI();await loadSharedData()});
+window.addEventListener('online',()=>{updateSyncStatus();loadSharedData()});window.addEventListener('offline',updateSyncStatus);
+window.addEventListener('beforeunload',()=>{if(pendingSync)localStorage.setItem(PENDING_KEY,'1')});
+
+function totals(){let credit=0,expense=0;state.transactions.forEach(t=>{if(t.type==='credit')credit+=Number(t.amount);else expense+=Number(t.amount)});return {credit,expense,balance:credit-expense}}
+function memberTotals(name){let credit=0;state.transactions.filter(t=>t.memberId===name&&t.type==='credit').forEach(t=>credit+=Number(t.amount));return {credit,expense:0,net:credit}}
+function render(){
+ const t=totals();$('totalCredit').textContent=money(t.credit);$('totalExpense').textContent=money(t.expense);$('balance').textContent=money(t.balance);$('balance').style.color=t.balance<0?'#ffb4b4':'white';$('memberCount').textContent=state.members.length;
+ const old=$('member').value;
+ $('member').innerHTML=state.members.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
+ if(state.members.some(m=>m.name===old))$('member').value=old;
+ $('membersList').innerHTML=state.members.map((m,i)=>{const x=memberTotals(m.name);return `<div class="member" style="padding:8px 10px;margin-top:6px"><div class="membertop"><div class="membername">${esc(m.name)}</div><strong style="font-size:14px;color:var(--green)">${money(x.credit)}</strong></div><div class="memberactions" style="margin-top:5px"><button class="mini" data-credit="${i}">＋ Credit</button><button class="mini" data-edit="${i}">Edit</button><button class="mini" data-remove-member="${i}" style="color:var(--red)">Delete</button></div></div>`}).join('')||'<div class="empty">No members yet. Add a member to start.</div>';
+ renderHistory();
+ renderRecentExpenses();
+ updateAuthUI();
+}
+function renderRecentExpenses(){
+ const expenses=[...state.transactions].filter(t=>t.type==='expense').sort((a,b)=>b.id-a.id).slice(0,12);
+ $('recentExpenses').innerHTML=expenses.map(t=>`<div class="recent-row"><div class="recent-comment">${esc(t.comment||'Tour expense')}</div><div class="recent-amount">−${money(t.amount)}</div></div>`).join('')||'<div class="recent-empty">No expenses yet.</div>';
+}
+function renderHistory(){
+ const q=$('search').value.trim().toLowerCase();
+ const arr=[...state.transactions].sort((a,b)=>b.id-a.id).filter(t=>(t.memberId+' '+t.comment+' '+t.date+' '+t.type).toLowerCase().includes(q));
+ $('history').innerHTML=arr.map(t=>`<div class="historyitem"><div><div class="histtitle ${t.type==='credit'?'credit':'debit'}">${esc(t.memberId||'General tour expense')} · ${t.type==='credit'?'Credit':'Expense'}</div><div class="histmeta ${t.type==='credit'?'credit':'debit'}">${esc(t.date)}${t.comment?' · '+esc(t.comment):''}</div><button class="mini" data-delete="${t.id}" style="margin-top:7px">Delete entry</button></div><div class="amt ${t.type==='credit'?'credit':'debit'}">${t.type==='credit'?'+':'−'}${money(t.amount)}</div></div>`).join('')||'<div class="empty">No transactions found.</div>';
+}
+function setType(type){currentType=type;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.type===type));const deleting=type==='deleteMember';$('memberField').hidden=type==='target'||type==='expense';$('amount').closest('.row').hidden=type==='target'||deleting;$('targetWrap').hidden=type!=='target';$('comment').hidden=deleting;$('comment').required=type!=='target'&&!deleting;$('amount').required=type!=='target'&&!deleting;const previous=$('member').value;$('member').innerHTML=(type==='expense'?'<option value="">General tour expense (not assigned to a member)</option>':'')+state.members.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');if(type!=='expense'&&state.members.some(m=>m.name===previous))$('member').value=previous;$('member').required=type==='credit'||deleting;$('saveBtn').textContent=type==='credit'?'Save credit':type==='expense'?'Save expense':deleting?'Delete selected member':'Save member';$('comment').placeholder=type==='target'?'Optional member note...':type==='expense'?'General tour expense: hotel, food, transport...':'e.g. Payment received...'}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setType(b.dataset.type)));
+$('entryForm').addEventListener('submit',e=>{e.preventDefault();if(!isAdmin){alert('Admin login required to add entries.');return}const comment=$('comment').value.trim(),date=$('date').value||today();
+ if(currentType==='deleteMember'){const name=$('member').value;if(!name){alert('Select a member to delete.');return}const count=state.transactions.filter(t=>t.memberId===name).length;if(confirm(`Delete member “${name}”? ${count?`Their ${count} transaction record(s) will remain in transaction history.`:'This cannot be undone.'}`)){state.members=state.members.filter(m=>m.name!==name);save();setType('expense')}return}
+ if(currentType==='target'){const name=$('member').value.trim();if(!name)return;const existing=state.members.find(m=>m.name.toLowerCase()===name.toLowerCase());if(existing){existing.target=Number($('target').value||0);alert('Member target updated.')}else{state.members.push({name,target:Number($('target').value||0)});if(comment)state.transactions.push({id:state.nextId++,date,type:'note',memberId:name,amount:0,comment})}save();e.target.reset();$('date').value=today();setType('credit');return}
+ if(!comment){alert('Comment / Details is required.');$('comment').focus();return}const amount=Number($('amount').value);if(!(amount>0)){alert('Enter an amount greater than zero.');return}const memberId=currentType==='credit'?$('member').value:'';if(currentType==='credit'&&!memberId){alert('Add/select a member first.');return}
+ state.transactions.push({id:state.nextId++,date,type:currentType,memberId,amount,comment});save();e.target.reset();$('date').value=today();setType(currentType);
+});
+$('addMemberBtn').addEventListener('click',()=>{if(!isAdmin){alert('Admin login required to manage members.');return}setType('target');$('member').value='';$('target').value='';$('amount').value='';$('comment').value='';$('member').focus();$('entryForm').scrollIntoView({behavior:'smooth',block:'start'})});
+$('membersList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(!isAdmin){alert('Admin login required to manage members.');return}let i;if(b.dataset.credit!==undefined){i=+b.dataset.credit;setType('credit');$('member').value=state.members[i].name;$('entryForm').scrollIntoView({behavior:'smooth'})}else if(b.dataset.edit!==undefined){i=+b.dataset.edit;const m=state.members[i];const name=prompt('Edit member name:',m.name);if(name===null)return;const trimmed=name.trim();if(!trimmed)return;if(state.members.some((x,j)=>j!==i&&x.name.toLowerCase()===trimmed.toLowerCase())){alert('A member with that name already exists.');return}const old=m.name;m.name=trimmed;m.target=Number(prompt('Expected contribution in ৳:',m.target||0)||0);state.transactions.forEach(t=>{if(t.memberId===old)t.memberId=trimmed});save()}else if(b.dataset.removeMember!==undefined){i=+b.dataset.removeMember;const m=state.members[i];const count=state.transactions.filter(t=>t.memberId===m.name).length;if(confirm(`Delete member “${m.name}”? ${count?`Their ${count} transaction record(s) will remain in transaction history.`:'This cannot be undone.'}`)){state.members.splice(i,1);save()}}});
+$('history').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;if(!isAdmin){alert('Admin login required to delete entries.');return}const id=Number(b.dataset.delete);if(confirm('Delete this transaction? This will update the totals.')){state.transactions=state.transactions.filter(t=>t.id!==id);save()}});
+$('search').addEventListener('input',renderHistory);
+function download(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function xmlEscape(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
+function excelSheet(name,rows){return `<Worksheet ss:Name="${xmlEscape(name)}"><Table>${rows.map(row=>`<Row>${row.map(v=>{const numeric=typeof v==='number'&&Number.isFinite(v);return `<Cell><Data ss:Type="${numeric?'Number':'String'}">${xmlEscape(v)}</Data></Cell>`}).join('')}</Row>`).join('')}</Table></Worksheet>`}
+$('excelBtn').addEventListener('click',()=>{const t=totals();const summary=[['Tour Fund Summary','Value'],['Total Credit',t.credit],['Total Expense',t.expense],['Available Balance',t.balance],['Member Count',state.members.length]];const members=[['Member','Total Contributed (BDT)'],...state.members.map(m=>[m.name,memberTotals(m.name).credit])];const transactions=[['ID','Date','Type','Member','Amount BDT','Comment'],...state.transactions.map(x=>[x.id,x.date,x.type==='credit'?'Credit':x.type==='expense'?'Expense':x.type,x.memberId||'General tour expense',Number(x.amount||0),x.comment||''])];const xml=`<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${excelSheet('Summary',summary)}${excelSheet('Members',members)}${excelSheet('Transactions',transactions)}</Workbook>`;download('tour-fund-manager.xls',xml,'application/vnd.ms-excel;charset=utf-8')});
+$('importBtn').addEventListener('click',()=>{if(!isAdmin){alert('Admin login required to restore data.');return}$('fileInput').click()});
+$('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin login required to restore data.');e.target.value='';return}const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.members)||!Array.isArray(data.transactions))throw Error('Invalid backup');if(confirm('Restore backup and replace current data?')){state=data;save();alert('Backup restored.')}}catch(err){alert('Could not read backup file.')}e.target.value=''});
+
+document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
+render();setType('expense');updateAuthUI();loadSharedData();
+</script>
+</body></html>
