@@ -205,8 +205,7 @@ function applyLocationMapMode(mode){
 }
 function initLocationMap(){
  if(locationMap||!window.L)return;
- locationMap=L.map('teamMap').setView([23.8103,0.4125],11);
- locationMap.setView([23.8103,90.4125],11);
+ locationMap=L.map('teamMap').setView([23.8103,90.4125],11);
  applyLocationMapMode(locationMapMode);
 }
 function markerPopup(p){return '<strong>'+esc(p.display_name||'Team member')+'</strong><br>Updated: '+esc(new Date(p.updated_at).toLocaleString())+(p.accuracy_m?' <br>Accuracy: ±'+Math.round(p.accuracy_m)+' m':'')}
