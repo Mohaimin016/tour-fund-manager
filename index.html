@@ -67,7 +67,7 @@ input,select,textarea{font:inherit;width:100%;border:1px solid #d5e0da;border-ra
 
 <div class="tracking-actions"><button class="btn" id="startLocationBtn" type="button">Enable my location</button><button class="btn secondary" id="stopLocationBtn" type="button">Stop sharing</button></div>
 <p style="font-size:11px;color:var(--muted);line-height:1.5">Your browser will ask for location permission. Sharing continues only while this page is open and your browser permits location access. You can stop sharing any time. Anyone with the app link can view shared locations. Do not share if you do not want your location public.</p>
-<div class="map-mode-switch" role="group" aria-label="Map appearance"><button class="map-mode-btn active" id="mapDayBtn" type="button" aria-pressed="true">☀️ Day mode</button><button class="map-mode-btn" id="mapDarkBtn" type="button" aria-pressed="false">🌙 Dark mode</button></div><div class="map-fullscreen-controls"><button class="map-mode-btn" id="fullscreenMapBtn" type="button" aria-pressed="false">⛶ Fullscreen map</button><button class="map-mode-btn" id="keepScreenAwakeBtn" type="button" aria-pressed="false">☀ Keep screen awake · OFF</button><button class="map-mode-btn" id="fitAllLocationsBtn" type="button" aria-pressed="false" style="background:#123c35;color:#fff;border-color:#123c35">📍 Fit all users · OFF</button></div><div class="map-speed-wrap"><div id="teamMap" aria-label="Map showing shared team locations"></div></div>
+<div class="map-mode-switch" role="group" aria-label="Map appearance"><button class="map-mode-btn active" id="mapDayBtn" type="button" aria-pressed="true">☀️ Day mode</button><button class="map-mode-btn" id="mapDarkBtn" type="button" aria-pressed="false">🌙 Dark mode</button></div><div class="map-fullscreen-controls"><button class="map-mode-btn" id="fullscreenMapBtn" type="button" aria-pressed="false">⛶ Fullscreen map</button><button class="map-mode-btn" id="keepScreenAwakeBtn" type="button" aria-pressed="false">☀ Keep screen awake · OFF</button><button class="map-mode-btn" id="fitAllLocationsBtn" type="button" aria-pressed="false" style="background:#123c35;color:#fff;border-color:#123c35">📍 Fit all users · OFF</button></div><div class="map-speed-wrap"><div id="teamMap" aria-label="Map showing shared team locations"><div id="speedMeter" class="speed-meter" aria-live="polite"><strong id="speedValue">0</strong><span>km/h</span></div></div></div>
 <h2 style="margin-top:14px">Team members</h2><div id="locationPeople"><div class="empty">Sign in to view shared locations.</div></div>
 </section></div>
 <div id="view-transactions" class="tabview" hidden><div class="layout"><section class="panel wide">
@@ -261,16 +261,31 @@ async function refreshTeamLocations(){
  if(!locationInitialBoundsSet&&points.length){fitAllUserLocations(points);locationInitialBoundsSet=true}
  if(locationAutoFitEnabled&&points.length){fitAllUserLocations(points)}
 }
+let ownSpeedSample=null, ownSpeedKmh=0;
 function updateSpeedMeter(position){
- // The standalone speed-meter element was removed from the map UI; do not let
- // its missing DOM node interrupt GPS updates or prevent location sharing.
  const speedEl=$('speedValue');
- if(!speedEl)return;
- const speedMps=position&&position.coords?position.coords.speed:null;
- if(speedMps!==null&&Number.isFinite(speedMps)&&speedMps>=0){
-  speedEl.textContent=Math.round(speedMps*3.6);
- }else{
-  speedEl.textContent='—';
+ if(!speedEl||!position||!position.coords)return;
+ const c=position.coords, now=Number(position.timestamp)||Date.now();
+ const lat=Number(c.latitude),lng=Number(c.longitude),accuracy=Number(c.accuracy)||999;
+ let speed=(Number.isFinite(c.speed)&&c.speed>0)?c.speed*3.6:null;
+ // Some phones report GPS movement but leave coords.speed at zero/null.
+ // Estimate speed from consecutive GPS fixes as a fallback.
+ if((speed===null||speed<1)&&Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=60&&ownSpeedSample){
+  const elapsed=(now-ownSpeedSample.time)/1000;
+  if(elapsed>=1&&elapsed<=30&&ownSpeedSample.accuracy<=60){
+   const rad=x=>x*Math.PI/180,dLat=rad(lat-ownSpeedSample.lat),dLng=rad(lng-ownSpeedSample.lng);
+   const a=Math.sin(dLat/2)**2+Math.cos(rad(ownSpeedSample.lat))*Math.cos(rad(lat))*Math.sin(dLng/2)**2;
+   const distance=6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(Math.max(0,1-a)));
+   const estimate=distance/elapsed*3.6;
+   // Ignore small GPS jitter while stopped, but retain realistic bike speeds.
+   if(estimate>=2&&estimate<=160)speed=estimate;
+   else if(estimate<2)speed=0;
+  }
+ }
+ if(Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=60)ownSpeedSample={lat,lng,time:now,accuracy};
+ if(speed!==null&&Number.isFinite(speed)&&speed>=0&&speed<=180){
+  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.35+speed*0.65);
+  speedEl.textContent=String(Math.round(ownSpeedKmh));
  }
 }
 async function sendMyLocation(position){
@@ -340,7 +355,7 @@ function startLocationSharing(){
  }
 }
 async function stopLocationSharing(clearConsent=true){
- if($('speedValue'))$('speedValue').textContent='—';if($('speedNote'))$('speedNote').textContent='Location sharing is off. Enable it to read GPS speed.';
+ ownSpeedSample=null;ownSpeedKmh=0;if($('speedValue'))$('speedValue').textContent='0';
  if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
  if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
  const visitorId=localStorage.getItem(LOCATION_VISITOR_KEY);
