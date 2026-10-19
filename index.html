@@ -247,7 +247,11 @@ async function refreshTeamLocations(){
  locationMarkers.forEach((marker,id)=>{if(!visible.has(id)){locationMap.removeLayer(marker);locationMarkers.delete(id)}});
  $('locationPeople').innerHTML=liveData.map(p=>{const stale=Date.now()-Date.parse(p.updated_at)>2*60*1000;return '<div class="location-person"><strong>'+esc(p.display_name)+'</strong>'+(stale?' <span style="color:#b93838;font-weight:700">(GPS update delayed)</span>':'')+'<br>Last update: '+esc(formatLocationDateTime(p.updated_at))+(p.accuracy_m?' · ±'+Math.round(p.accuracy_m)+' m':'')+'</div>'}).join('')||'<div class="empty">No saved team locations found. Each member must enable location sharing again.</div>';
  liveData.forEach(p=>{const lat=Number(p.latitude),lng=Number(p.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const ll=[lat,lng];if(locationMarkers.has(p.user_id)){const marker=locationMarkers.get(p.user_id);marker.setLatLng(ll).setPopupContent(markerPopup(p));const label=locationSpeedLabel(p);if(marker.getTooltip())marker.setTooltipContent(label);else marker.bindTooltip(label,{permanent:true,direction:'top',offset:[0,-12],className:'member-map-label'})}else{locationMarkers.set(p.user_id,L.marker(ll).addTo(locationMap).bindPopup(markerPopup(p)).bindTooltip(locationSpeedLabel(p),{permanent:true,direction:'top',offset:[0,-12],className:'member-map-label'}))}});
- const points=liveData.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(!locationInitialBoundsSet&&points.length){fitAllUserLocations(points);locationInitialBoundsSet=true}else if(locationAutoFitEnabled&&points.length){fitAllUserLocations(points)}
+ const points=liveData.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);
+ // Only auto-fit once when the map first gets usable locations, or when the user explicitly enables Fit all.
+ // Never reset the user's manual zoom/pan during periodic refreshes or incoming GPS updates.
+ if(!locationInitialBoundsSet&&points.length){fitAllUserLocations(points);locationInitialBoundsSet=true}
+ if(locationAutoFitEnabled&&points.length){fitAllUserLocations(points)}
 }
 function updateSpeedMeter(position){
  // The standalone speed-meter element was removed from the map UI; do not let
