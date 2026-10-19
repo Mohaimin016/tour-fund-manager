@@ -288,10 +288,10 @@ function startLocationSharing(){
  localStorage.setItem(LOCATION_CONSENT_KEY,'1');
  localStorage.setItem('tourFundPublicLocationName_v1',displayName);
  locationMessage('Waiting for browser location permission…');
- locationWatchId=navigator.geolocation.watchPosition(sendMyLocation,err=>{locationMessage('Location unavailable: '+({1:'permission denied',2:'position unavailable',3:'request timed out'}[err.code]||err.message));if(err.code===1)stopLocationSharing(false)},{enableHighAccuracy:true,maximumAge:15000,timeout:20000});
+ locationWatchId=navigator.geolocation.watchPosition(sendMyLocation,err=>{const reasons={1:'Permission denied. Allow Location for this site in your browser settings, then try again.',2:'GPS position unavailable. Turn on device Location/GPS and try outdoors.',3:'GPS request timed out. Keep Location/GPS on and try again.'};locationMessage('Location unavailable: '+(reasons[err.code]||err.message||'Unknown location error'));if(err.code===1)stopLocationSharing(false)},{enableHighAccuracy:true,maximumAge:15000,timeout:30000});
 }
 async function stopLocationSharing(clearConsent=true){
- $('speedValue').textContent='—';$('speedNote').textContent='Location sharing is off. Enable it to read GPS speed.';
+ $('speedValue').textContent='—';if($('speedNote'))$('speedNote').textContent='Location sharing is off. Enable it to read GPS speed.';
  if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
  if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
  const visitorId=localStorage.getItem(LOCATION_VISITOR_KEY);
