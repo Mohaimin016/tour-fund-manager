@@ -265,25 +265,28 @@ let ownSpeedSample=null, ownSpeedKmh=0;
 function updateSpeedMeter(position){
  const speedEl=$('speedValue');
  if(!speedEl||!position||!position.coords)return;
- const c=position.coords, now=Number(position.timestamp)||Date.now();
+ const c=position.coords, now=Date.now();
  const lat=Number(c.latitude),lng=Number(c.longitude),accuracy=Number(c.accuracy)||999;
- let speed=(Number.isFinite(c.speed)&&c.speed>=0.8)?c.speed*3.6:null;
- // Device GPS speed is often missing; estimate from movement between GPS fixes.
- if((speed===null||speed<2)&&Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=150&&ownSpeedSample){
+ let gpsSpeed=(c.speed!==null&&c.speed!==undefined)?Number(c.speed)*3.6:null;
+ let estimated=null;
+ // Use movement between successive GPS fixes when Chrome does not provide speed.
+ if(Number.isFinite(lat)&&Number.isFinite(lng)&&ownSpeedSample){
   const elapsed=(now-ownSpeedSample.time)/1000;
-  if(elapsed>=1&&elapsed<=60&&ownSpeedSample.accuracy<=150){
+  if(elapsed>=0.5&&elapsed<=120&&accuracy<=200&&ownSpeedSample.accuracy<=200){
    const rad=x=>x*Math.PI/180,dLat=rad(lat-ownSpeedSample.lat),dLng=rad(lng-ownSpeedSample.lng);
    const a=Math.sin(dLat/2)**2+Math.cos(rad(ownSpeedSample.lat))*Math.cos(rad(lat))*Math.sin(dLng/2)**2;
    const distance=6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(Math.max(0,1-a)));
-   const uncertainty=Math.max(3,(accuracy+ownSpeedSample.accuracy)*0.12);
-   const estimate=Math.max(0,distance-uncertainty)/elapsed*3.6;
-   if(estimate>=1.5&&estimate<=180)speed=estimate;
-   else if(estimate<1.5)speed=0;
+   const raw=distance/elapsed*3.6;
+   // Ignore tiny GPS drift, but don't subtract the accuracy radius from real movement.
+   if(distance<2.5)estimated=0;
+   else if(raw<=180)estimated=raw;
   }
  }
- if(Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=150)ownSpeedSample={lat,lng,time:now,accuracy};
+ if(Number.isFinite(lat)&&Number.isFinite(lng))ownSpeedSample={lat,lng,time:now,accuracy};
+ let speed=(Number.isFinite(gpsSpeed)&&gpsSpeed>=0.8&&gpsSpeed<=180)?gpsSpeed:estimated;
  if(speed!==null&&Number.isFinite(speed)&&speed>=0&&speed<=180){
-  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.45+speed*0.55);
+  // Smooth jitter, while allowing the reading to respond quickly as bike speed changes.
+  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.25+speed*0.75);
   speedEl.textContent=String(Math.round(ownSpeedKmh));
  }
 }
