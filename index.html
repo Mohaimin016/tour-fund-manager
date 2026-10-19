@@ -249,8 +249,11 @@ async function refreshTeamLocations(){
  const points=liveData.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))).map(p=>[Number(p.latitude),Number(p.longitude)]);if(!locationInitialBoundsSet&&points.length){fitAllUserLocations(points);locationInitialBoundsSet=true}else if(locationAutoFitEnabled&&points.length){fitAllUserLocations(points)}
 }
 function updateSpeedMeter(position){
- const speedMps=position&&position.coords?position.coords.speed:null;
+ // The standalone speed-meter element was removed from the map UI; do not let
+ // its missing DOM node interrupt GPS updates or prevent location sharing.
  const speedEl=$('speedValue');
+ if(!speedEl)return;
+ const speedMps=position&&position.coords?position.coords.speed:null;
  if(speedMps!==null&&Number.isFinite(speedMps)&&speedMps>=0){
   speedEl.textContent=Math.round(speedMps*3.6);
  }else{
