@@ -182,7 +182,7 @@ $('excelBtn').addEventListener('click',()=>{const t=totals();const summary=[['To
 $('importBtn').addEventListener('click',()=>{if(!isAdmin){alert('Admin login required to restore data.');return}$('fileInput').click()});
 $('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin login required to restore data.');e.target.value='';return}const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.members)||!Array.isArray(data.transactions))throw Error('Invalid backup');if(confirm('Restore backup and replace current data?')){state=data;save();alert('Backup restored.')}}catch(err){alert('Could not read backup file.')}e.target.value=''});
 
-document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
+document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view);if(b.dataset.view==='location'){initLocationMap();setTimeout(()=>{if(locationMap)locationMap.invalidateSize({pan:false});refreshTeamLocations()},150)}}));
 
 /* Public-link location sharing: visitors do not need to sign in. */
 let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationInitialBoundsSet=false, locationAutoFitEnabled=false, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day", locationPermissionTimer=null;
@@ -262,9 +262,19 @@ async function sendMyLocation(position){
  const visitorId=getLocationVisitorId();
  const displayName=($('locationDisplayName').value||'').trim().slice(0,60);
  if(!displayName){stopLocationSharing(false);locationMessage('Please enter your name before sharing your location.');return}
+ // Show this device on the map immediately; server sync is handled below.
+ initLocationMap();
+ if(locationMap){
+  const lat=position.coords.latitude,lng=position.coords.longitude,ll=[lat,lng];
+  locationMap.setView(ll,16);
+  const popup='<strong>'+esc(displayName)+'</strong><br>My current location<br>Accuracy: ±'+Math.round(position.coords.accuracy||0)+' m';
+  if(locationMarkers.has(visitorId)){locationMarkers.get(visitorId).setLatLng(ll).setPopupContent(popup)}
+  else locationMarkers.set(visitorId,L.marker(ll).addTo(locationMap).bindPopup(popup).bindTooltip(esc(displayName)+' (GPS)',{permanent:true,direction:'top',offset:[0,-12],className:'member-map-label'}));
+  setTimeout(()=>locationMap&&locationMap.invalidateSize({pan:false}),100);
+ }
  const payload={user_id:visitorId,display_name:displayName,latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy_m:position.coords.accuracy,sharing_enabled:true,updated_at:new Date().toISOString()};
  const {error}=await supabaseClient.from('tour_fund_locations').upsert(payload,{onConflict:'user_id'});
- if(error){locationMessage('Location update failed: '+error.message);return}
+ if(error){locationMessage('Your location is shown on this device, but server sharing failed: '+error.message+' (check Supabase table permissions).');return}
  // Keep one latest location ID per name: remove other IDs using the same name.
  const {data:allRows,error:readError}=await supabaseClient.from('tour_fund_locations').select('user_id,display_name');
  if(!readError&&Array.isArray(allRows)){
