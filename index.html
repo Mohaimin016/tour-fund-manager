@@ -267,24 +267,23 @@ function updateSpeedMeter(position){
  if(!speedEl||!position||!position.coords)return;
  const c=position.coords, now=Number(position.timestamp)||Date.now();
  const lat=Number(c.latitude),lng=Number(c.longitude),accuracy=Number(c.accuracy)||999;
- let speed=(Number.isFinite(c.speed)&&c.speed>0)?c.speed*3.6:null;
- // Some phones report GPS movement but leave coords.speed at zero/null.
- // Estimate speed from consecutive GPS fixes as a fallback.
- if((speed===null||speed<1)&&Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=60&&ownSpeedSample){
+ let speed=(Number.isFinite(c.speed)&&c.speed>=0.8)?c.speed*3.6:null;
+ // Device GPS speed is often missing; estimate from movement between GPS fixes.
+ if((speed===null||speed<2)&&Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=150&&ownSpeedSample){
   const elapsed=(now-ownSpeedSample.time)/1000;
-  if(elapsed>=1&&elapsed<=30&&ownSpeedSample.accuracy<=60){
+  if(elapsed>=1&&elapsed<=60&&ownSpeedSample.accuracy<=150){
    const rad=x=>x*Math.PI/180,dLat=rad(lat-ownSpeedSample.lat),dLng=rad(lng-ownSpeedSample.lng);
    const a=Math.sin(dLat/2)**2+Math.cos(rad(ownSpeedSample.lat))*Math.cos(rad(lat))*Math.sin(dLng/2)**2;
    const distance=6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(Math.max(0,1-a)));
-   const estimate=distance/elapsed*3.6;
-   // Ignore small GPS jitter while stopped, but retain realistic bike speeds.
-   if(estimate>=2&&estimate<=160)speed=estimate;
-   else if(estimate<2)speed=0;
+   const uncertainty=Math.max(3,(accuracy+ownSpeedSample.accuracy)*0.12);
+   const estimate=Math.max(0,distance-uncertainty)/elapsed*3.6;
+   if(estimate>=1.5&&estimate<=180)speed=estimate;
+   else if(estimate<1.5)speed=0;
   }
  }
- if(Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=60)ownSpeedSample={lat,lng,time:now,accuracy};
+ if(Number.isFinite(lat)&&Number.isFinite(lng)&&accuracy<=150)ownSpeedSample={lat,lng,time:now,accuracy};
  if(speed!==null&&Number.isFinite(speed)&&speed>=0&&speed<=180){
-  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.35+speed*0.65);
+  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.45+speed*0.55);
   speedEl.textContent=String(Math.round(ownSpeedKmh));
  }
 }
