@@ -281,7 +281,9 @@ async function sendMyLocation(position){
 function startLocationSharing(){
  if(!navigator.geolocation){locationMessage('This browser does not support geolocation. Try opening the app in Chrome or Safari.');return}
  if(!window.isSecureContext){locationMessage('Location access requires HTTPS. Open the GitHub Pages HTTPS address.');return}
- if(locationWatchId!==null)return;
+ // Allow a fresh attempt if an earlier GPS watch is stuck.
+ if(locationWatchId!==null){try{navigator.geolocation.clearWatch(locationWatchId)}catch(e){} locationWatchId=null}
+ if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}
  const displayName=($('locationDisplayName').value||'').trim();
  if(!displayName){locationMessage('Please enter your name before sharing your location.');$('locationDisplayName').focus();return}
  if(localStorage.getItem(LOCATION_CONSENT_KEY)!=='1'&&!confirm('Share your live location publicly? Anyone with the app link can view it. You can stop sharing at any time.'))return;
@@ -311,7 +313,7 @@ function startLocationSharing(){
  }
 }
 async function stopLocationSharing(clearConsent=true){
- $('speedValue').textContent='—';if($('speedNote'))$('speedNote').textContent='Location sharing is off. Enable it to read GPS speed.';
+ if($('speedValue'))$('speedValue').textContent='—';if($('speedNote'))$('speedNote').textContent='Location sharing is off. Enable it to read GPS speed.';
  if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
  if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
  const visitorId=localStorage.getItem(LOCATION_VISITOR_KEY);
