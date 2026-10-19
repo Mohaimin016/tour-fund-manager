@@ -272,10 +272,9 @@ function updateSpeedMeter(position){
  const gpsSpeed=(c.speed!==null&&c.speed!==undefined)?Number(c.speed)*3.6:null;
  let estimated=null;
  if(Number.isFinite(lat)&&Number.isFinite(lng)){
-  const sample={lat,lng,time:now,accuracy};
-  // Keep a short history so tiny consecutive GPS movements do not force the meter to zero.
-  ownSpeedSamples=ownSpeedSamples.filter(s=>now-s.time<=15000);
-  const anchor=[...ownSpeedSamples].reverse().find(s=>(now-s.time)>=4000&&(now-s.time)<=12000&&accuracy<=100&&s.accuracy<=100);
+  ownSpeedSamples=ownSpeedSamples.filter(s=>now-s.time<=20000);
+  // Compare fixes several seconds apart to avoid under-reading from tiny GPS steps.
+  const anchor=[...ownSpeedSamples].reverse().find(s=>(now-s.time)>=3000&&(now-s.time)<=15000);
   if(anchor){
    const rad=x=>x*Math.PI/180;
    const dLat=rad(lat-anchor.lat),dLng=rad(lng-anchor.lng);
@@ -283,17 +282,18 @@ function updateSpeedMeter(position){
    const distance=6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(Math.max(0,1-a)));
    const elapsed=(now-anchor.time)/1000;
    const raw=distance/elapsed*3.6;
-   if(Number.isFinite(raw)&&raw<=180)estimated=raw;
+   // Require a meaningful displacement; otherwise treat it as GPS drift while stationary.
+   if(distance>=5&&Number.isFinite(raw)&&raw<=180)estimated=raw;
+   else if(distance<5)estimated=0;
   }
-  ownSpeedSamples.push(sample);
-  if(ownSpeedSamples.length>20)ownSpeedSamples=ownSpeedSamples.slice(-20);
+  ownSpeedSamples.push({lat,lng,time:now,accuracy});
+  if(ownSpeedSamples.length>30)ownSpeedSamples=ownSpeedSamples.slice(-30);
  }
- // Use real GPS speed when it is meaningful; many Android devices report null or 0, so estimate from GPS movement.
- let speed=(Number.isFinite(gpsSpeed)&&gpsSpeed>=1&&gpsSpeed<=180)?gpsSpeed:estimated;
+ let speed=(Number.isFinite(gpsSpeed)&&gpsSpeed>0.5&&gpsSpeed<=180)?gpsSpeed:estimated;
  if(speed!==null&&Number.isFinite(speed)&&speed>=0&&speed<=180){
-  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.15+speed*0.85);
+  ownSpeedKmh=ownSpeedKmh===0?speed:(ownSpeedKmh*0.2+speed*0.8);
   speedEl.textContent=String(Math.round(ownSpeedKmh));
- }else if(accuracy>100){
+ }else if(accuracy>150){
   speedEl.textContent='—';
  }
 }
