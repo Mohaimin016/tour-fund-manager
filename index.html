@@ -185,7 +185,7 @@ $('fileInput').addEventListener('change',async e=>{if(!isAdmin){alert('Admin log
 document.querySelectorAll('.main-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.main-tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabview').forEach(v=>v.hidden=v.id!=='view-'+b.dataset.view)}));
 
 /* Public-link location sharing: visitors do not need to sign in. */
-let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationInitialBoundsSet=false, locationAutoFitEnabled=false, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day";
+let locationWatchId=null, locationMap=null, locationMarkers=new Map(), locationRefreshTimer=null, locationTileLayer=null, locationInitialBoundsSet=false, locationAutoFitEnabled=false, locationMapMode=localStorage.getItem("tourFundLocationMapMode_v1")||"day", locationPermissionTimer=null;
 const locationSpeedSamples=new Map();
 const LOCATION_CONSENT_KEY='tourFundLocationConsent_v2';
 const LOCATION_VISITOR_KEY='tourFundPublicLocationVisitor_v1';
@@ -279,7 +279,7 @@ async function sendMyLocation(position){
  refreshTeamLocations();
 }
 function startLocationSharing(){
- if(!navigator.geolocation){locationMessage('This browser does not support geolocation.');return}
+ if(!navigator.geolocation){locationMessage('This browser does not support geolocation. Try opening the app in Chrome or Safari.');return}
  if(!window.isSecureContext){locationMessage('Location access requires HTTPS. Open the GitHub Pages HTTPS address.');return}
  if(locationWatchId!==null)return;
  const displayName=($('locationDisplayName').value||'').trim();
@@ -287,12 +287,32 @@ function startLocationSharing(){
  if(localStorage.getItem(LOCATION_CONSENT_KEY)!=='1'&&!confirm('Share your live location publicly? Anyone with the app link can view it. You can stop sharing at any time.'))return;
  localStorage.setItem(LOCATION_CONSENT_KEY,'1');
  localStorage.setItem('tourFundPublicLocationName_v1',displayName);
- locationMessage('Waiting for browser location permission…');
- locationWatchId=navigator.geolocation.watchPosition(sendMyLocation,err=>{const reasons={1:'Permission denied. Allow Location for this site in your browser settings, then try again.',2:'GPS position unavailable. Turn on device Location/GPS and try outdoors.',3:'GPS request timed out. Keep Location/GPS on and try again.'};locationMessage('Location unavailable: '+(reasons[err.code]||err.message||'Unknown location error'));if(err.code===1)stopLocationSharing(false)},{enableHighAccuracy:true,maximumAge:15000,timeout:30000});
+ locationMessage('Requesting GPS permission… If no browser prompt appears, allow Location for this site in browser settings.');
+ if(locationPermissionTimer)clearTimeout(locationPermissionTimer);
+ locationPermissionTimer=setTimeout(()=>{
+  if(locationWatchId!==null)locationMessage('Still waiting for GPS. Check your browser site settings and set Location to Allow, turn on device Location/GPS, then press Stop sharing and try again.');
+ },12000);
+ const onPosition=position=>{
+  if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}
+  sendMyLocation(position);
+ };
+ const onError=err=>{
+  if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}
+  const reasons={1:'Permission denied. Open browser site settings for this website and set Location to Allow, then try again.',2:'GPS position unavailable. Turn on device Location/GPS and try outdoors.',3:'GPS request timed out. Keep Location/GPS on and try again.'};
+  locationMessage('Location unavailable: '+(reasons[err.code]||err.message||'Unknown location error'));
+  if(err.code===1)stopLocationSharing(false);
+ };
+ try{
+  locationWatchId=navigator.geolocation.watchPosition(onPosition,onError,{enableHighAccuracy:true,maximumAge:0,timeout:30000});
+ }catch(error){
+  if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}
+  locationWatchId=null;
+  locationMessage('Could not start GPS: '+(error.message||'Check browser location permission.'));
+ }
 }
 async function stopLocationSharing(clearConsent=true){
  $('speedValue').textContent='—';if($('speedNote'))$('speedNote').textContent='Location sharing is off. Enable it to read GPS speed.';
- if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
+ if(locationPermissionTimer){clearTimeout(locationPermissionTimer);locationPermissionTimer=null}if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
  if(clearConsent)localStorage.removeItem(LOCATION_CONSENT_KEY);
  const visitorId=localStorage.getItem(LOCATION_VISITOR_KEY);
  // Remove this device's marker immediately so it cannot look like the device is still live.
